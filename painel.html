@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barbearia Yukio - Painel Administrativo</title>
+  <title>Painel Administrativo - Barbearia</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -19,7 +19,7 @@
       <p class="text-xs text-zinc-400">Insira a senha do painel</p>
     </div>
     <input type="password" id="input-senha" placeholder="Digite a senha..." class="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-zinc-100 focus:ring-2 focus:ring-amber-500 focus:outline-none text-center">
-    <button onclick="verificarSenha()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg shadow-amber-500/20">
+    <button onclick="verificarSenha()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg">
       Entrar no Painel
     </button>
   </div>
@@ -30,94 +30,140 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-xl">
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-2xl font-bold text-zinc-100 uppercase tracking-tight">Barbearia Yukio</h1>
-          <span class="bg-amber-500/10 text-amber-500 border border-amber-500/30 text-xs px-2.5 py-1 rounded-full font-bold">Painel de Gestão</span>
+          <h1 id="titulo-topo-admin" class="text-2xl font-bold text-zinc-100 uppercase tracking-tight">Barbearia</h1>
+          <span class="bg-amber-500/10 text-amber-500 border border-amber-500/30 text-xs px-2.5 py-1 rounded-full font-bold">Gestão</span>
         </div>
-        <p class="text-xs text-zinc-400 mt-1">Configuração de canais, horários e pausas</p>
+        <p class="text-xs text-zinc-400 mt-1">Painel de Controlo Completo</p>
       </div>
       <button onclick="sair()" class="text-xs text-zinc-400 hover:text-red-400 flex items-center gap-1 transition-all">
         <i data-lucide="log-out" class="w-4 h-4"></i> Sair
       </button>
     </div>
 
-    <!-- 1. CANAIS DISPONÍVEIS -->
+    <!-- 1. IDENTIDADE VISUAL -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
-      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-        <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
-          <i data-lucide="share-2" class="w-5 h-5 text-amber-500"></i> Canais Ativos para Receber Agendamentos
-        </h2>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2">
-          <label class="block text-xs font-bold uppercase text-zinc-400">WhatsApp (Número)</label>
-          <input type="tel" id="input-whats-yukio" placeholder="Ex: 09012345678" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
+      <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-3">
+        <i data-lucide="image" class="w-5 h-5 text-amber-500"></i> Identidade Visual & Nome
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="space-y-2">
+          <label class="block text-xs font-bold uppercase text-zinc-400">Nome da Barbearia</label>
+          <input type="text" id="input-nome-barbearia" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
         </div>
-        <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2">
-          <label class="block text-xs font-bold uppercase text-zinc-400">Instagram (@)</label>
-          <input type="text" id="input-instagram-yukio" placeholder="Ex: barbeariayukio" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
-        </div>
-        <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2">
-          <label class="block text-xs font-bold uppercase text-zinc-400">Telegram (@)</label>
-          <input type="text" id="input-telegram-yukio" placeholder="Ex: barbeariayukio" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
+        <div class="space-y-2">
+          <label class="block text-xs font-bold uppercase text-zinc-400">URL do Logótipo (Imagem)</label>
+          <input type="text" id="input-logo-url" placeholder="https://..." class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
         </div>
       </div>
-      <button onclick="salvarConfiguracoesServidor('Canais atualizados com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg shadow-amber-500/20">
-        Guardar Canais
+      <button onclick="salvarConfiguracoesServidor('Identidade atualizada com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all">
+        Guardar Identidade
       </button>
     </div>
 
-    <!-- 2. ALTERAR SENHA -->
+    <!-- 2. CANAIS & SEGURANÇA -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
-      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-        <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
-          <i data-lucide="key" class="w-5 h-5 text-amber-500"></i> Segurança do Painel
-        </h2>
+      <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-3">
+        <i data-lucide="share-2" class="w-5 h-5 text-amber-500"></i> Canais & Senha do Painel
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2">
+          <label class="block text-xs font-bold uppercase text-zinc-400">WhatsApp</label>
+          <input type="tel" id="input-whats-yukio" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
+        </div>
+        <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2">
+          <label class="block text-xs font-bold uppercase text-zinc-400">Instagram</label>
+          <input type="text" id="input-instagram-yukio" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
+        </div>
+        <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2">
+          <label class="block text-xs font-bold uppercase text-zinc-400">Nova Senha</label>
+          <input type="password" id="input-nova-senha" placeholder="Deixe em branco" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
+        </div>
       </div>
-      <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 flex gap-2">
-        <input type="password" id="input-nova-senha" placeholder="Nova senha do painel..." class="flex-1 p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
-        <button onclick="salvarConfiguracoesServidor('Senha atualizada com sucesso!')" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-xs rounded-lg transition-all">
-          Atualizar Senha
-        </button>
+      <button onclick="salvarConfiguracoesServidor('Canais e segurança atualizados!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all">
+        Guardar Canais e Senha
+      </button>
+    </div>
+
+    <!-- 3. NOVO: AGENDA DO DIA & MENSAGEM AUTOMÁTICA PARA CLIENTES -->
+    <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
+      <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-3">
+        <i data-lucide="message-square-code" class="w-5 h-5 text-amber-500"></i> Gestão de Agenda & Mensagens do Dia
+      </h2>
+      <div class="flex flex-col sm:flex-row gap-3 items-center bg-zinc-950 p-4 rounded-xl border border-zinc-800">
+        <div class="w-full sm:w-auto flex-1">
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Selecionar Data para Ver Clientes</label>
+          <input type="date" id="filtro-data-agenda" onchange="renderizarAgendaDoDia()" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-amber-500 font-bold focus:outline-none">
+        </div>
+      </div>
+      <div id="lista-agendamentos-dia" class="space-y-2 max-h-60 overflow-y-auto">
+        <p class="text-xs text-zinc-500 text-center py-4">Selecione uma data para ver os clientes agendados.</p>
       </div>
     </div>
 
-    <!-- 3. GERENCIAR SERVIÇOS -->
+    <!-- 4. CRIAR RESERVA MANUAL -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
-      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-        <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
-          <i data-lucide="scissors" class="w-5 h-5 text-amber-500"></i> Serviços & Valores (Yen ¥)
-        </h2>
+      <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-3">
+        <i data-lucide="user-plus" class="w-5 h-5 text-amber-500"></i> Criar Agendamento Manual (Barbeiro)
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-zinc-950 p-4 rounded-xl border border-zinc-800">
+        <div>
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Nome do Cliente</label>
+          <input type="text" id="manual-nome" placeholder="Ex: Kenji Tanaka" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Serviço</label>
+          <select id="manual-servico" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Data</label>
+          <input type="date" id="manual-data" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-amber-500 font-bold focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Horário Inicial</label>
+          <select id="manual-horario" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none"></select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Contato / Telefone</label>
+          <input type="text" id="manual-whats" placeholder="Ex: 090-XXXX-XXXX" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
+        </div>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-zinc-950 p-3 rounded-xl border border-zinc-800">
+      <button onclick="criarAgendamentoManual()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl transition-all shadow-lg">
+        Registar Agendamento Manual
+      </button>
+    </div>
+
+    <!-- 5. GERENCIAR SERVIÇOS & DURAÇÃO -->
+    <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
+      <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-3">
+        <i data-lucide="scissors" class="w-5 h-5 text-amber-500"></i> Serviços, Valores (¥) & Duração (Minutos)
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 bg-zinc-950 p-3 rounded-xl border border-zinc-800">
         <input type="text" id="novo-servico-nome" placeholder="Nome do Serviço" class="p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
         <input type="number" id="novo-servico-preco" placeholder="Valor (¥)" class="p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-amber-500 font-bold focus:outline-none">
+        <input type="number" id="novo-servico-duracao" placeholder="Minutos" class="p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
         <button onclick="adicionarServico()" class="py-2.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1">
-          <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Serviço
+          <i data-lucide="plus" class="w-4 h-4"></i> Adicionar
         </button>
       </div>
       <div class="space-y-2" id="lista-servicos-admin"></div>
     </div>
 
-    <!-- 4. DIAS DE FUNCIONAMENTO & PAUSAS FIXAS -->
+    <!-- 6. DIAS DE FUNCIONAMENTO & PAUSAS FIXAS -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
-      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-        <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
-          <i data-lucide="calendar-off" class="w-5 h-5 text-amber-500"></i> Dias de Funcionamento & Pausas Fixas
-        </h2>
-      </div>
+      <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-3">
+        <i data-lucide="calendar-off" class="w-5 h-5 text-amber-500"></i> Dias de Funcionamento & Pausas Fixas
+      </h2>
       <div class="space-y-2">
         <label class="block text-xs font-bold uppercase text-zinc-400">Dias da Semana</label>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="grid-dias-semana"></div>
       </div>
 
-      <!-- Horários de Pausa Padrão -->
       <div class="pt-4 border-t border-zinc-800 space-y-2">
         <h3 class="text-sm font-bold text-zinc-200">Horários Padrão em que NÃO Atende (Pausas Fixas)</h3>
-        <p class="text-xs text-zinc-400">Verde = Disponível | Vermelho = Indisponível. Clica nos horários para alterar e depois clica no botão abaixo para guardar.</p>
         <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 bg-zinc-950 rounded-xl border border-zinc-800 max-h-48 overflow-y-auto" id="grid-horarios-pausa-padrao"></div>
       </div>
 
-      <button onclick="salvarConfiguracoesServidor('Dias e horários de pausa guardados com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg">
+      <button onclick="salvarConfiguracoesServidor('Dias e horários guardados com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all">
         Guardar Dias e Horários de Pausa
       </button>
     </div>
@@ -129,17 +175,17 @@
     lucide.createIcons();
 
     let dadosServidor = {
+      nomeBarbearia: "Barbearia Yukio",
+      logoUrl: "",
       senhaYukio: "1234",
       whatsYukio: "",
       instagramYukio: "",
       telegramYukio: "",
-      servicos: [
-        { id: 'corte', nome: 'Corte de Cabelo', preco: 3000 },
-        { id: 'combo', nome: 'Corte + Barba', preco: 4500 }
-      ],
+      servicos: [],
       diasFechados: [],
       horariosPausaPadrao: [],
-      horariosBloqueadosPorData: {}
+      horariosBloqueadosPorData: {},
+      agendamentos: []
     };
 
     function gerarHorarios30min() {
@@ -154,14 +200,13 @@
 
     const horariosLista = gerarHorarios30min();
     const diasSemana = [
-      { id: 0, nome: 'Domingo' },
-      { id: 1, nome: 'Segunda-feira' },
-      { id: 2, nome: 'Terça-feira' },
-      { id: 3, nome: 'Quarta-feira' },
-      { id: 4, nome: 'Quinta-feira' },
-      { id: 5, nome: 'Sexta-feira' },
-      { id: 6, nome: 'Sábado' }
+      { id: 0, nome: 'Domingo' }, { id: 1, nome: 'Segunda-feira' }, { id: 2, nome: 'Terça-feira' },
+      { id: 3, nome: 'Quarta-feira' }, { id: 4, nome: 'Quinta-feira' }, { id: 5, nome: 'Sexta-feira' }, { id: 6, nome: 'Sábado' }
     ];
+
+    const hojeIso = new Date().toISOString().split('T')[0];
+    document.getElementById('manual-data').value = hojeIso;
+    document.getElementById('filtro-data-agenda').value = hojeIso;
 
     async function carregarDadosServidor() {
       try {
@@ -175,15 +220,13 @@
       }
     }
 
-    async function salvarConfiguracoesServidor(mensagemSucesso = "Configurações salvas com sucesso!") {
-      const whats = document.getElementById('input-whats-yukio').value.trim();
-      const instagram = document.getElementById('input-instagram-yukio').value.trim();
-      const telegram = document.getElementById('input-telegram-yukio').value.trim();
+    async function salvarConfiguracoesServidor(mensagemSucesso = "Configurações salvas!") {
+      dadosServidor.nomeBarbearia = document.getElementById('input-nome-barbearia').value.trim() || "Barbearia";
+      dadosServidor.logoUrl = document.getElementById('input-logo-url').value.trim();
+      dadosServidor.whatsYukio = document.getElementById('input-whats-yukio').value.trim();
+      dadosServidor.instagramYukio = document.getElementById('input-instagram-yukio').value.trim();
+      
       const novaSenha = document.getElementById('input-nova-senha').value.trim();
-
-      dadosServidor.whatsYukio = whats;
-      dadosServidor.instagramYukio = instagram;
-      dadosServidor.telegramYukio = telegram;
       if (novaSenha) dadosServidor.senhaYukio = novaSenha;
 
       try {
@@ -202,23 +245,23 @@
           alert("Erro ao salvar no servidor.");
         }
       } catch (err) {
-        console.error("Erro:", err);
-        alert("Erro de conexão com o servidor.");
+        console.error(err);
+        alert("Erro de conexão.");
       }
     }
 
     async function verificarSenha() {
       await carregarDadosServidor();
       const senhaDigitada = document.getElementById('input-senha').value;
-      const senhaCorreta = dadosServidor.senhaYukio || "1234";
-
-      if (senhaDigitada === senhaCorreta) {
+      if (senhaDigitada === (dadosServidor.senhaYukio || "1234")) {
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('admin-content').classList.remove('hidden');
         
+        document.getElementById('input-nome-barbearia').value = dadosServidor.nomeBarbearia || "";
+        document.getElementById('input-logo-url').value = dadosServidor.logoUrl || "";
         document.getElementById('input-whats-yukio').value = dadosServidor.whatsYukio || "";
         document.getElementById('input-instagram-yukio').value = dadosServidor.instagramYukio || "";
-        document.getElementById('input-telegram-yukio').value = dadosServidor.telegramYukio || "";
+        document.getElementById('titulo-topo-admin').innerText = dadosServidor.nomeBarbearia;
         
         renderizarTudo();
       } else {
@@ -226,40 +269,108 @@
       }
     }
 
-    function renderizarServicos() {
-      const container = document.getElementById('lista-servicos-admin');
+    function renderizarAgendaDoDia() {
+      const dataFiltro = document.getElementById('filtro-data-agenda').value;
+      const container = document.getElementById('lista-agendamentos-dia');
       container.innerHTML = '';
-      dadosServidor.servicos.forEach((s, index) => {
+
+      const agendamentos = dadosServidor.agendamentos || [];
+      const doDia = agendamentos.filter(a => a.data === dataFiltro);
+
+      if (doDia.length === 0) {
+        container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4">Nenhum agendamento para este dia.</p>`;
+        return;
+      }
+
+      doDia.sort((a, b) => a.horario.localeCompare(b.horario));
+
+      doDia.forEach(ag => {
         const div = document.createElement('div');
-        div.className = "p-3 bg-zinc-950 rounded-xl border border-zinc-800 flex items-center justify-between gap-3";
+        div.className = "p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-between gap-2";
+        
+        // Formata link para mandar mensagem de lembrete no WhatsApp do cliente
+        let numeroLimpo = (ag.whatsapp || '').replace(/\D/g, '');
+        let linkWhatsCli = "#";
+        if (numeroLimpo.length > 5) {
+          if (!numeroLimpo.startsWith('81')) numeroLimpo = '81' + numeroLimpo;
+          const textoLembrete = `Olá ${ag.cliente}, tudo bem? Aqui é da ${dadosServidor.nomeBarbearia || 'Barbearia'}. Passando para lembrar do seu agendamento hoje às ${ag.horario} (${ag.servico}). Confirmado?`;
+          linkWhatsCli = `https://api.whatsapp.com/send?phone=${numeroLimpo}&text=${encodeURIComponent(textoLembrete)}`;
+        }
+
         div.innerHTML = `
-          <div class="flex-1">
-            <input type="text" value="${s.nome}" onchange="atualizarServico(${index}, 'nome', this.value)" class="bg-transparent text-sm font-bold text-zinc-200 focus:outline-none w-full">
+          <div>
+            <div class="text-sm font-bold text-amber-500">${ag.horario} - ${ag.cliente}</div>
+            <div class="text-xs text-zinc-400">${ag.servico} | Contato: ${ag.whatsapp}</div>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-zinc-500">¥</span>
-            <input type="number" value="${s.preco}" onchange="atualizarServico(${index}, 'preco', this.value)" class="w-20 p-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-amber-500 font-bold focus:outline-none text-right">
-            <button onclick="removerServico(${index})" class="p-2 text-zinc-500 hover:text-red-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-          </div>
+          ${numeroLimpo.length > 5 ? `
+            <a href="${linkWhatsCli}" target="_blank" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1">
+              <i data-lucide="message-circle" class="w-4 h-4"></i> Enviar Lembrete
+            </a>` : `<span class="text-[10px] text-zinc-500">Sem WhatsApp</span>`}
         `;
         container.appendChild(div);
       });
       lucide.createIcons();
     }
 
+    function renderizarServicos() {
+      const container = document.getElementById('lista-servicos-admin');
+      const selectManual = document.getElementById('manual-servico');
+      container.innerHTML = '';
+      selectManual.innerHTML = '';
+
+      dadosServidor.servicos.forEach((s, index) => {
+        const div = document.createElement('div');
+        div.className = "p-3 bg-zinc-950 rounded-xl border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3";
+        div.innerHTML = `
+          <input type="text" value="${s.nome}" onchange="atualizarServico(${index}, 'nome', this.value)" class="bg-transparent text-sm font-bold text-zinc-200 focus:outline-none flex-1 w-full">
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-between">
+            <div class="flex items-center gap-1">
+              <span class="text-xs text-zinc-500">¥</span>
+              <input type="number" value="${s.preco}" onchange="atualizarServico(${index}, 'preco', this.value)" class="w-20 p-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-amber-500 font-bold text-right focus:outline-none">
+            </div>
+            <div class="flex items-center gap-1">
+              <input type="number" value="${s.duracao || 30}" onchange="atualizarServico(${index}, 'duracao', this.value)" class="w-16 p-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-200 text-right focus:outline-none">
+              <span class="text-xs text-zinc-500">min</span>
+            </div>
+            <button onclick="removerServico(${index})" class="p-2 text-zinc-500 hover:text-red-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+        `;
+        container.appendChild(div);
+
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify(s);
+        opt.innerText = `${s.nome} (¥${s.preco} - ${s.duracao || 30}min)`;
+        selectManual.appendChild(opt);
+      });
+
+      const selectHorario = document.getElementById('manual-horario');
+      selectHorario.innerHTML = '';
+      horariosLista.forEach(h => {
+        const optH = document.createElement('option');
+        optH.value = h;
+        optH.innerText = h;
+        selectHorario.appendChild(optH);
+      });
+
+      lucide.createIcons();
+    }
+
     async function adicionarServico() {
       const nome = document.getElementById('novo-servico-nome').value;
       const preco = document.getElementById('novo-servico-preco').value;
-      if (!nome || !preco) { alert("Preencha o nome e o valor!"); return; }
-      dadosServidor.servicos.push({ id: 'srv-' + Date.now(), nome, preco: Number(preco) });
+      const duracao = document.getElementById('novo-servico-duracao').value || 30;
+      if (!nome || !preco) { alert("Preencha nome e valor!"); return; }
+      
+      dadosServidor.servicos.push({ id: 'srv-' + Date.now(), nome, preco: Number(preco), duracao: Number(duracao) });
       document.getElementById('novo-servico-nome').value = '';
       document.getElementById('novo-servico-preco').value = '';
+      document.getElementById('novo-servico-duracao').value = '';
       renderizarServicos();
       await salvarConfiguracoesServidor("Serviço adicionado!");
     }
 
     async function atualizarServico(index, campo, valor) {
-      dadosServidor.servicos[index][campo] = campo === 'preco' ? Number(valor) : valor;
+      dadosServidor.servicos[index][campo] = campo === 'nome' ? valor : Number(valor);
       await salvarConfiguracoesServidor("Serviço atualizado!");
     }
 
@@ -267,6 +378,56 @@
       dadosServidor.servicos.splice(index, 1);
       renderizarServicos();
       await salvarConfiguracoesServidor("Serviço removido!");
+    }
+
+    async function criarAgendamentoManual() {
+      const nome = document.getElementById('manual-nome').value.trim();
+      const servicoObj = JSON.parse(document.getElementById('manual-servico').value);
+      const data = document.getElementById('manual-data').value;
+      const horarioInicio = document.getElementById('manual-horario').value;
+      const whats = document.getElementById('manual-whats').value.trim() || "Manual";
+
+      if (!nome || !data) { alert("Preencha o nome e a data!"); return; }
+
+      const duracaoMin = servicoObj.duracao || 30;
+      const blocosNecessarios = Math.ceil(duracaoMin / 30);
+      const idxInicio = horariosLista.indexOf(horarioInicio);
+      
+      let horariosOcupados = [];
+      for (let i = 0; i < blocosNecessarios; i++) {
+        if (idxInicio + i < horariosLista.length) {
+          horariosOcupados.push(horariosLista[idxInicio + i]);
+        }
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/api/agendar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cliente: nome,
+            servico: servicoObj.nome,
+            preco: servicoObj.preco,
+            data: data,
+            horario: horarioInicio,
+            whatsapp: whats,
+            horariosOcupados: horariosOcupados
+          })
+        });
+
+        if (res.ok) {
+          alert(`Agendamento de ${nome} criado com sucesso!`);
+          document.getElementById('manual-nome').value = '';
+          document.getElementById('manual-whats').value = '';
+          await carregarDadosServidor();
+          renderizarAgendaDoDia();
+        } else {
+          alert("Erro ao criar agendamento.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Erro de conexão.");
+      }
     }
 
     function renderizarDias() {
@@ -327,6 +488,7 @@
       renderizarServicos();
       renderizarDias();
       renderizarHorariosPausaPadrao();
+      renderizarAgendaDoDia();
     }
 
     function sair() { window.location.href = 'index.html'; }
