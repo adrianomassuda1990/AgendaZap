@@ -33,7 +33,7 @@
           <h1 id="titulo-painel-topo" class="text-2xl font-bold text-zinc-100 uppercase tracking-tight">Barbearia</h1>
           <span class="bg-amber-500/10 text-amber-500 border border-amber-500/30 text-xs px-2.5 py-1 rounded-full font-bold">Painel de Gestão</span>
         </div>
-        <p class="text-xs text-zinc-400 mt-1">Gestão completa, identidade visual e agenda</p>
+        <p class="text-xs text-zinc-400 mt-1">Gestão de horários, bloqueios e agendamentos</p>
       </div>
       <button onclick="sair()" class="text-xs text-zinc-400 hover:text-red-400 flex items-center gap-1 transition-all">
         <i data-lucide="log-out" class="w-4 h-4"></i> Sair
@@ -57,44 +57,45 @@
           <input type="file" id="input-logo-file" accept="image/*" onchange="converterLogoParaBase64(event)" class="w-full p-2 text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-zinc-950 hover:file:bg-amber-600 cursor-pointer">
         </div>
       </div>
-      <button onclick="salvarConfiguracoesServidor('Identidade visual atualizada com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg shadow-amber-500/20">
+      <button onclick="salvarConfiguracoesServidor('Identidade visual atualizada com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg">
         Guardar Identidade Visual
       </button>
     </div>
 
-    <!-- 2. AGENDAMENTO MANUAL (NOVO) -->
+    <!-- 2. BLOQUEIO MANUAL DE HORÁRIOS POR DATA -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
-          <i data-lucide="calendar-plus" class="w-5 h-5 text-amber-500"></i> Agendamento Manual (Marcar próximo corte do cliente)
+          <i data-lucide="clock" class="w-5 h-5 text-amber-500"></i> Bloquear / Desbloquear Horários Manualmente
         </h2>
       </div>
-      <p class="text-xs text-zinc-400">Use esta opção para bloquear diretamente na agenda o horário que o cliente reservou pessoalmente na barbearia.</p>
+      <p class="text-xs text-zinc-400">Escolha uma data e clique nos horários para bloqueá-los ou reativá-los na agenda dos clientes.</p>
       
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-zinc-950 p-4 rounded-xl border border-zinc-800">
+      <div class="space-y-3">
         <div>
-          <label class="block text-[11px] font-bold uppercase text-zinc-400 mb-1">Nome do Cliente</label>
-          <input type="text" id="manual-cliente" placeholder="Ex: Kenji Tanaka" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Selecione a Data</label>
+          <input type="date" id="data-bloqueio-admin" onchange="renderizarHorariosBloqueioAdmin()" class="w-full sm:w-64 p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-amber-500 font-bold focus:outline-none">
         </div>
-        <div>
-          <label class="block text-[11px] font-bold uppercase text-zinc-400 mb-1">Serviço</label>
-          <select id="manual-servico" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none"></select>
-        </div>
-        <div>
-          <label class="block text-[11px] font-bold uppercase text-zinc-400 mb-1">Data</label>
-          <input type="date" id="manual-data" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-amber-500 font-bold focus:outline-none">
-        </div>
-        <div>
-          <label class="block text-[11px] font-bold uppercase text-zinc-400 mb-1">Horário de Início</label>
-          <input type="time" id="manual-horario" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-amber-500 font-bold focus:outline-none">
-        </div>
+        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 bg-zinc-950 rounded-xl border border-zinc-800 max-h-48 overflow-y-auto" id="grid-horarios-admin-bloqueio"></div>
       </div>
-      <button onclick="realizarAgendamentoManual()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl transition-all shadow-lg">
-        Confirmar Agendamento Manual na Agenda
-      </button>
     </div>
 
-    <!-- 3. CANAIS ATIVOS -->
+    <!-- 3. AGENDAMENTOS REGISTADOS (PARA CONTROLAR TROTES) -->
+    <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
+      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+        <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
+          <i data-lucide="users" class="w-5 h-5 text-amber-500"></i> Agendamentos Atuais na Base de Dados
+        </h2>
+        <button onclick="carregarDadosServidor().then(renderizarTudo)" class="text-xs text-amber-500 hover:underline flex items-center gap-1">
+          <i data-lucide="refresh-cw" class="w-3 h-3"></i> Atualizar Lista
+        </button>
+      </div>
+      <div class="space-y-2 max-h-60 overflow-y-auto" id="lista-agendamentos-admin">
+        <p class="text-xs text-zinc-500">Nenhum agendamento registado.</p>
+      </div>
+    </div>
+
+    <!-- 4. CANAIS ATIVOS -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -115,12 +116,12 @@
           <input type="text" id="input-telegram-yukio" placeholder="Ex: barbeariayukio" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
         </div>
       </div>
-      <button onclick="salvarConfiguracoesServidor('Canais atualizados com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg shadow-amber-500/20">
+      <button onclick="salvarConfiguracoesServidor('Canais atualizados com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg">
         Guardar Canais
       </button>
     </div>
 
-    <!-- 4. GERENCIAR SERVIÇOS & TEMPOS -->
+    <!-- 5. GERENCIAR SERVIÇOS & TEMPOS -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -138,7 +139,7 @@
       <div class="space-y-2" id="lista-servicos-admin"></div>
     </div>
 
-    <!-- 5. BLOQUEIO DE DIAS -->
+    <!-- 6. BLOQUEIO DE DIAS -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -148,7 +149,7 @@
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="grid-dias-semana"></div>
     </div>
 
-    <!-- 6. SEGURANÇA DO PAINEL -->
+    <!-- 7. SEGURANÇA DO PAINEL -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -170,16 +171,13 @@
     lucide.createIcons();
 
     let dadosServidor = {
-      nomeBarbearia: "Barbearia Yukio",
+      nomeBarbearia: "Barbearia",
       logoBarbearia: "",
       senhaYukio: "1234",
       whatsYukio: "",
       instagramYukio: "",
       telegramYukio: "",
-      servicos: [
-        { id: 'corte', nome: 'Corte de Cabelo', preco: 3000, duracao: 50 },
-        { id: 'combo', nome: 'Corte + Barba', preco: 4500, duracao: 80 }
-      ],
+      servicos: [],
       diasFechados: [],
       horariosBloqueadosPorData: {},
       agendamentos: []
@@ -197,20 +195,28 @@
       { id: 6, nome: 'Sábado' }
     ];
 
-    const inputDataManual = document.getElementById('manual-data');
+    const inputDataAdmin = document.getElementById('data-bloqueio-admin');
     const hojeStr = new Date().toISOString().split('T')[0];
-    if (inputDataManual) {
-      inputDataManual.value = hojeStr;
-      inputDataManual.min = hojeStr;
+    if (inputDataAdmin) inputDataAdmin.value = hojeStr;
+
+    function gerarHorarios15min() {
+      const lista = [];
+      for (let h = 8; h <= 21; h++) {
+        for (let m = 0; m < 60; m += 15) {
+          const horaStr = h < 10 ? `0${h}` : `${h}`;
+          const minStr = m === 0 ? `00` : `${m}`;
+          lista.push(`${horaStr}:${minStr}`);
+        }
+      }
+      return lista;
     }
+    const horariosLista = gerarHorarios15min();
 
     function converterLogoParaBase64(event) {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function(e) {
-          logoBase64Temp = e.target.result;
-        };
+        reader.onload = function(e) { logoBase64Temp = e.target.result; };
         reader.readAsDataURL(file);
       }
     }
@@ -219,12 +225,8 @@
       try {
         const res = await fetch(`${API_URL}/api/dados`);
         const data = await res.json();
-        if (data) {
-          dadosServidor = { ...dadosServidor, ...data };
-        }
-      } catch (err) {
-        console.error("Erro ao carregar dados:", err);
-      }
+        if (data) { dadosServidor = { ...dadosServidor, ...data }; }
+      } catch (err) { console.error("Erro ao carregar dados:", err); }
     }
 
     async function salvarConfiguracoesServidor(mensagemSucesso = "Configurações salvas com sucesso!") {
@@ -245,30 +247,14 @@
         const res = await fetch(`${API_URL}/api/configurar`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            nomeBarbearia: dadosServidor.nomeBarbearia,
-            logoBarbearia: dadosServidor.logoBarbearia,
-            whatsYukio: dadosServidor.whatsYukio,
-            instagramYukio: dadosServidor.instagramYukio,
-            telegramYukio: dadosServidor.telegramYukio,
-            senhaYukio: dadosServidor.senhaYukio,
-            servicos: dadosServidor.servicos,
-            diasFechados: dadosServidor.diasFechados,
-            horariosBloqueadosPorData: dadosServidor.horariosBloqueadosPorData
-          })
+          body: JSON.stringify(dadosServidor)
         });
-
         if (res.ok) {
           if (novaSenha) document.getElementById('input-nova-senha').value = '';
           alert(mensagemSucesso);
           preencherCamposPainel();
-        } else {
-          alert("Erro ao salvar no servidor.");
-        }
-      } catch (err) {
-        console.error("Erro:", err);
-        alert("Erro de conexão com o servidor.");
-      }
+        } else { alert("Erro ao salvar no servidor."); }
+      } catch (err) { alert("Erro de conexão."); }
     }
 
     async function verificarSenha() {
@@ -281,9 +267,7 @@
         document.getElementById('admin-content').classList.remove('hidden');
         preencherCamposPainel();
         renderizarTudo();
-      } else {
-        alert("Senha incorreta!");
-      }
+      } else { alert("Senha incorreta!"); }
     }
 
     function preencherCamposPainel() {
@@ -292,83 +276,85 @@
       document.getElementById('input-whats-yukio').value = dadosServidor.whatsYukio || "";
       document.getElementById('input-instagram-yukio').value = dadosServidor.instagramYukio || "";
       document.getElementById('input-telegram-yukio').value = dadosServidor.telegramYukio || "";
-      
-      // Select de serviços para agendamento manual
-      const selectServico = document.getElementById('manual-servico');
-      selectServico.innerHTML = '';
-      (dadosServidor.servicos || []).forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = JSON.stringify(s);
-        opt.innerText = `${s.nome} (${s.duracao || 30} min - ¥${s.preco})`;
-        selectServico.appendChild(opt);
+    }
+
+    function renderizarHorariosBloqueioAdmin() {
+      const dataSel = inputDataAdmin.value;
+      const grid = document.getElementById('grid-horarios-admin-bloqueio');
+      grid.innerHTML = '';
+      if (!dadosServidor.horariosBloqueadosPorData) dadosServidor.horariosBloqueadosPorData = {};
+      const bloqueadosDoDia = dadosServidor.horariosBloqueadosPorData[dataSel] || [];
+
+      horariosLista.forEach(hora => {
+        const isBloqueado = bloqueadosDoDia.includes(hora);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.innerText = hora;
+        btn.className = isBloqueado 
+          ? "p-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg text-xs font-bold" 
+          : "p-2 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg text-xs font-bold hover:border-zinc-700";
+        
+        btn.onclick = async () => {
+          if (!dadosServidor.horariosBloqueadosPorData[dataSel]) {
+            dadosServidor.horariosBloqueadosPorData[dataSel] = [];
+          }
+          if (isBloqueado) {
+            dadosServidor.horariosBloqueadosPorData[dataSel] = dadosServidor.horariosBloqueadosPorData[dataSel].filter(h => h !== hora);
+          } else {
+            dadosServidor.horariosBloqueadosPorData[dataSel].push(hora);
+          }
+          await salvarConfiguracoesServidor("Horário atualizado!");
+          renderizarHorariosBloqueioAdmin();
+        };
+        grid.appendChild(btn);
       });
     }
 
-    function horaParaMinutos(horaStr) {
-      const [h, m] = horaStr.split(':').map(Number);
-      return h * 60 + m;
-    }
-
-    async function realizarAgendamentoManual() {
-      const nomeCliente = document.getElementById('manual-cliente').value.trim();
-      const servicoObjStr = document.getElementById('manual-servico').value;
-      const dataStr = document.getElementById('manual-data').value;
-      const horarioStr = document.getElementById('manual-horario').value;
-
-      if (!nomeCliente || !servicoObjStr || !dataStr || !horarioStr) {
-        alert("Preencha todos os campos do agendamento manual!");
+    function renderizarListaAgendamentos() {
+      const container = document.getElementById('lista-agendamentos-admin');
+      container.innerHTML = '';
+      const agendamentos = dadosServidor.agendamentos || [];
+      if (agendamentos.length === 0) {
+        container.innerHTML = `<p class="text-xs text-zinc-500">Nenhum agendamento registado.</p>`;
         return;
       }
+      agendamentos.slice().reverse().forEach((ag, idx) => {
+        const div = document.createElement('div');
+        div.className = "p-3 bg-zinc-950 rounded-xl border border-zinc-800 flex justify-between items-center text-xs";
+        div.innerHTML = `
+          <div>
+            <span class="font-bold text-amber-500">${ag.data} às ${ag.horario}</span> - <span class="text-zinc-100 font-bold">${ag.cliente}</span>
+            <div class="text-zinc-400 mt-0.5">${ag.servico} (¥${ag.preco}) | Tel: ${ag.whatsapp}</div>
+          </div>
+          <button onclick="removerAgendamento(${agendamentos.length - 1 - idx})" class="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        `;
+        container.appendChild(div);
+      });
+      lucide.createIcons();
+    }
 
-      const servicoObj = JSON.parse(servicoObjStr);
-      const duracaoMin = servicoObj.duracao || 30;
-      const inicioMin = horaParaMinutos(horarioStr);
-
-      try {
-        for (let m = inicioMin; m < inicioMin + duracaoMin; m += 15) {
-          const hStr = String(Math.floor(m / 60)).padStart(2, '0');
-          const mStr = String(m % 60).padStart(2, '0');
-          const slot = `${hStr}:${mStr}`;
-
-          await fetch(`${API_URL}/api/agendar`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              cliente: nomeCliente + " (Manual)",
-              servico: servicoObj.nome,
-              preco: servicoObj.preco,
-              data: dataStr,
-              horario: slot,
-              whatsapp: "Balcão"
-            })
-          });
-        }
-        alert("Agendamento manual realizado e horários bloqueados com sucesso!");
-        document.getElementById('manual-cliente').value = '';
-        document.getElementById('manual-horario').value = '';
-        await carregarDadosServidor();
-      } catch (e) {
-        console.error("Erro:", e);
-        alert("Erro ao realizar agendamento manual.");
-      }
+    async function removerAgendamento(index) {
+      dadosServidor.agendamentos.splice(index, 1);
+      await salvarConfiguracoesServidor("Agendamento removido da lista!");
+      renderizarListaAgendamentos();
     }
 
     function renderizarServicos() {
       const container = document.getElementById('lista-servicos-admin');
       container.innerHTML = '';
-      dadosServidor.servicos.forEach((s, index) => {
+      (dadosServidor.servicos || []).forEach((s, index) => {
         const div = document.createElement('div');
         div.className = "p-3 bg-zinc-950 rounded-xl border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3";
         div.innerHTML = `
           <div class="flex-1 w-full">
-            <input type="text" value="${s.nome}" onchange="atualizarServico(${index}, 'nome', this.value)" class="bg-transparent text-sm font-bold text-zinc-200 focus:outline-none focus:border-b border-amber-500 w-full">
+            <input type="text" value="${s.nome}" onchange="atualizarServico(${index}, 'nome', this.value)" class="bg-transparent text-sm font-bold text-zinc-200 focus:outline-none w-full">
           </div>
           <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
             <span class="text-xs font-bold text-zinc-500">¥</span>
-            <input type="number" value="${s.preco}" onchange="atualizarServico(${index}, 'preco', this.value)" class="w-20 p-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-amber-500 font-bold focus:outline-none text-right">
+            <input type="number" value="${s.preco}" onchange="atualizarServico(${index}, 'preco', this.value)" class="w-20 p-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-amber-500 font-bold text-right">
             <span class="text-xs font-bold text-zinc-500">Min:</span>
-            <input type="number" value="${s.duracao || 30}" onchange="atualizarServico(${index}, 'duracao', this.value)" class="w-16 p-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-amber-500 font-bold focus:outline-none text-right">
-            <button onclick="removerServico(${index})" class="p-2 text-zinc-500 hover:text-red-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <input type="number" value="${s.duracao || 30}" onchange="atualizarServico(${index}, 'duracao', this.value)" class="w-16 p-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-amber-500 font-bold text-right">
+            <button onclick="removerServico(${index})" class="p-2 text-zinc-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         `;
         container.appendChild(div);
@@ -381,6 +367,7 @@
       const preco = document.getElementById('novo-servico-preco').value;
       const duracao = document.getElementById('novo-servico-duracao').value || 30;
       if (!nome || !preco) { alert("Preencha o nome e o valor!"); return; }
+      if (!dadosServidor.servicos) dadosServidor.servicos = [];
       dadosServidor.servicos.push({ id: 'srv-' + Date.now(), nome, preco: Number(preco), duracao: Number(duracao) });
       document.getElementById('novo-servico-nome').value = '';
       document.getElementById('novo-servico-preco').value = '';
@@ -404,8 +391,9 @@
       const container = document.getElementById('grid-dias-semana');
       container.innerHTML = '';
       diasSemana.forEach(dia => {
-        const isFechado = dadosServidor.diasFechados.includes(dia.id);
+        const isFechado = (dadosServidor.diasFechados || []).includes(dia.id);
         const btn = document.createElement('button');
+        btn.type = 'button';
         btn.onclick = () => toggleDia(dia.id);
         btn.className = isFechado 
           ? "p-3 bg-red-500/10 border border-red-500/40 text-red-400 font-bold rounded-xl flex flex-col items-center gap-1 text-xs" 
@@ -416,6 +404,7 @@
     }
 
     async function toggleDia(idDia) {
+      if (!dadosServidor.diasFechados) dadosServidor.diasFechados = [];
       if (dadosServidor.diasFechados.includes(idDia)) {
         dadosServidor.diasFechados = dadosServidor.diasFechados.filter(d => d !== idDia);
       } else {
@@ -428,6 +417,8 @@
     function renderizarTudo() {
       renderizarServicos();
       renderizarDias();
+      renderizarHorariosBloqueioAdmin();
+      renderizarListaAgendamentos();
       preencherCamposPainel();
     }
 
