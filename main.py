@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Optional
+import sqlite3
+import json
 
 app = FastAPI()
 
@@ -13,22 +15,57 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-banco_dados = {
-    "nomeBarbearia": "Barbearia Yukio",
-    "logoBarbearia": "",
-    "whatsYukio": "",
-    "instagramYukio": "",
-    "telegramYukio": "",
-    "senhaYukio": "1234",
-    "servicos": [
-        {"id": "corte", "nome": "Corte de Cabelo", "preco": 3000, "duracao": 50},
-        {"id": "combo", "nome": "Corte + Barba", "preco": 4500, "duracao": 80}
-    ],
-    "diasFechados": [],
-    "horariosPausaPadrao": [],  # <--- ADICIONADO AQUI
-    "horariosBloqueadosPorData": {},
-    "agendamentos": []
-}
+# FUNÇÕES PARA GERIR O SQLITE (agendazap.db)
+def inicializar_bd():
+    conn = sqlite3.connect("agendazap.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS configuracoes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            dados TEXT
+        )
+    """)
+    cursor.execute("SELECT COUNT(*) FROM configuracoes")
+    if cursor.fetchone()[0] == 0:
+        dados_iniciais = {
+            "nomeBarbearia": "Barbearia Yukio",
+            "logoBarbearia": "",
+            "whatsYukio": "",
+            "instagramYukio": "",
+            "telegramYukio": "",
+            "senhaYukio": "1234",
+            "servicos": [
+                {"id": "corte", "nome": "Corte de Cabelo", "preco": 3000, "duracao": 50},
+                {"id": "combo", "nome": "Corte + Barba", "preco": 4500, "duracao": 80}
+            ],
+            "diasFechados": [],
+            "horariosPausaPadrao": [],
+            "horariosBloqueadosPorData": {},
+            "agendamentos": []
+        }
+        cursor.execute("INSERT INTO configuracoes (dados) VALUES (?)", (json.dumps(dados_iniciais),))
+        conn.commit()
+    conn.close()
+
+inicializar_bd()
+
+def carregar_do_bd():
+    conn = sqlite3.connect("agendazap.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT dados FROM configuracoes ORDER BY id DESC LIMIT 1")
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return json.loads(row[0])
+    return {}
+
+def salvar_no_bd(dados):
+    conn = sqlite3.connect("agendazap.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM configuracoes")
+    cursor.execute("INSERT INTO configuracoes (dados) VALUES (?)", (json.dumps(dados),))
+    conn.commit()
+    conn.close()
 
 class Agendamento(BaseModel):
     cliente: str
@@ -47,46 +84,58 @@ class Configuracao(BaseModel):
     senhaYukio: Optional[str] = None
     servicos: Optional[List[dict]] = None
     diasFechados: Optional[List[int]] = None
-    horariosPausaPadrao: Optional[List[str]] = None  # <--- ADICIONADO AQUI
+    horariosPausaPadrao: Optional[List[str]] = None
     horariosBloqueadosPorData: Optional[Dict[str, List[str]]] = None
+    agendamentos: Optional[List[dict]] = None
 
 @app.get("/api/dados")
 def obter_dados():
-    return banco_dados
+    return carregar_do_bd()
 
 @app.post("/api/agendar")
 def realizar_agendamento(agendamento: Agendamento):
-    banco_dados["agendamentos"].append(agendamento.dict())
+    db = carregar_do_bd()
+    if "agendamentos" not in db:
+        db["agendamentos"] = []
+    db["agendamentos"].append(agendamento.dict())
     
-    if agendamento.data not in banco_dados["horariosBloqueadosPorData"]:
-        banco_dados["horariosBloqueadosPorData"][agendamento.data] = []
+    if "horariosBloqueadosPorData" not in db:
+        db["horariosBloqueadosPorData"] = {}
+    if agendamento.data not in db["horariosBloqueadosPorData"]:
+        db["horariosBloqueadosPorData"][agendamento.data] = []
         
-    if agendamento.horario not in banco_dados["horariosBloqueadosPorData"][agendamento.data]:
-        banco_dados["horariosBloqueadosPorData"][agendamento.data].append(agendamento.horario)
+    if agendamento.horario not in db["horariosBloqueadosPorData"][agendamento.data]:
+        db["horariosBloqueadosPorData"][agendamento.data].append(agendamento.horario)
         
+    salvar_no_bd(db)
     return {"sucesso": True, "mensagem": "Agendamento confirmado!"}
 
 @app.post("/api/configurar")
 def atualizar_configuracao(config: Configuracao):
+    db = carregar_do_bd()
+    
     if config.nomeBarbearia is not None:
-        banco_dados["nomeBarbearia"] = config.nomeBarbearia
+        db["nomeBarbearia"] = config.nomeBarbearia
     if config.logoBarbearia is not None:
-        banco_dados["logoBarbearia"] = config.logoBarbearia
+        db["logoBarbearia"] = config.logoBarbearia
     if config.whatsYukio is not None:
-        banco_dados["whatsYukio"] = config.whatsYukio
+        db["whatsYukio"] = config.whatsYukio
     if config.instagramYukio is not None:
-        banco_dados["instagramYukio"] = config.instagramYukio
+        db["instagramYukio"] = config.instagramYukio
     if config.telegramYukio is not None:
-        banco_dados["telegramYukio"] = config.telegramYukio
+        db["telegramYukio"] = config.telegramYukio
     if config.senhaYukio is not None:
-        banco_dados["senhaYukio"] = config.senhaYukio
+        db["senhaYukio"] = config.senhaYukio
     if config.servicos is not None:
-        banco_dados["servicos"] = config.servicos
+        db["servicos"] = config.servicos
     if config.diasFechados is not None:
-        banco_dados["diasFechados"] = config.diasFechados
-    if config.horariosPausaPadrao is not None:  # <--- ADICIONADO AQUI
-        banco_dados["horariosPausaPadrao"] = config.horariosPausaPadrao
+        db["diasFechados"] = config.diasFechados
+    if config.horariosPausaPadrao is not None:
+        db["horariosPausaPadrao"] = config.horariosPausaPadrao
     if config.horariosBloqueadosPorData is not None:
-        banco_dados["horariosBloqueadosPorData"] = config.horariosBloqueadosPorData
+        db["horariosBloqueadosPorData"] = config.horariosBloqueadosPorData
+    if config.agendamentos is not None:
+        db["agendamentos"] = config.agendamentos
         
-    return {"sucesso": True, "banco": banco_dados}
+    salvar_no_bd(db)
+    return {"sucesso": True, "banco": db}
