@@ -62,7 +62,7 @@
       </button>
     </div>
 
-    <!-- 2. BLOQUEIO DE HORÁRIOS POR DATA ESPECÍFICA (COM ON/OFF) -->
+    <!-- 2. BLOQUEIO DE HORÁRIOS POR DATA ESPECÍFICA (COM ON/OFF E RESERVA MANUAL) -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -143,7 +143,7 @@
       <div class="space-y-2" id="lista-servicos-admin"></div>
     </div>
 
-    <!-- 6. BLOQUEIO DE DIAS -->
+    <!-- 6. DIAS DE FUNCIONAMENTO & PAUSAS RECORRENTES -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -151,6 +151,13 @@
         </h2>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="grid-dias-semana"></div>
+
+      <!-- NOVA SECÇÃO: Horários que ele NÃO atende por defeito (Pausas recorrentes) -->
+      <div class="pt-4 border-t border-zinc-800 space-y-2">
+        <h3 class="text-sm font-bold text-zinc-200">Horários Padrão em que NÃO Atende (Pausas/Folgas Fixas)</h3>
+        <p class="text-xs text-zinc-400">Clique nos horários abaixo para fechá-los por defeito em todos os dias (ex: horário de almoço ou descanso).</p>
+        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 bg-zinc-950 rounded-xl border border-zinc-800 max-h-40 overflow-y-auto" id="grid-horarios-pausa-padrao"></div>
+      </div>
     </div>
 
     <!-- 7. SEGURANÇA DO PAINEL -->
@@ -184,6 +191,7 @@
       servicos: [],
       diasFechados: [],
       horariosBloqueadosPorData: {},
+      horariosPausaPadrao: [],
       agendamentos: []
     };
 
@@ -342,6 +350,33 @@
       });
     }
 
+    function renderizarHorariosPausaPadrao() {
+      const grid = document.getElementById('grid-horarios-pausa-padrao');
+      grid.innerHTML = '';
+      if (!dadosServidor.horariosPausaPadrao) dadosServidor.horariosPausaPadrao = [];
+
+      horariosLista.forEach(hora => {
+        const isPausa = dadosServidor.horariosPausaPadrao.includes(hora);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.innerText = hora;
+        btn.className = isPausa 
+          ? "p-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg text-xs font-bold" 
+          : "p-2 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg text-xs font-bold hover:border-zinc-700";
+
+        btn.onclick = async () => {
+          if (isPausa) {
+            dadosServidor.horariosPausaPadrao = dadosServidor.horariosPausaPadrao.filter(h => h !== hora);
+          } else {
+            dadosServidor.horariosPausaPadrao.push(hora);
+          }
+          await salvarConfiguracoesServidor("Horário de pausa padrão atualizado!");
+          renderizarHorariosPausaPadrao();
+        };
+        grid.appendChild(btn);
+      });
+    }
+
     function liberarDiaInteiro() {
       const dataSel = inputDataAdmin.value;
       if (dadosServidor.horariosBloqueadosPorData) {
@@ -461,6 +496,7 @@
       renderizarServicos();
       renderizarDias();
       renderizarHorariosBloqueioAdmin();
+      renderizarHorariosPausaPadrao();
       renderizarListaAgendamentos();
       preencherCamposPainel();
     }
