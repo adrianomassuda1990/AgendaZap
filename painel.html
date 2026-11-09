@@ -241,8 +241,16 @@
       } catch (err) { console.error("Erro ao carregar dados:", err); }
     }
 
+    // SALVAMENTO ROBUSTO: Envia o objeto completo atualizado para o servidor
     async function salvarConfiguracoesSilencioso() {
       try {
+        const nomeBarbearia = document.getElementById('input-nome-barbearia').value.trim();
+        if (nomeBarbearia) dadosServidor.nomeBarbearia = nomeBarbearia;
+        if (logoBase64Temp) dadosServidor.logoBarbearia = logoBase64Temp;
+        dadosServidor.whatsYukio = document.getElementById('input-whats-yukio').value.trim();
+        dadosServidor.instagramYukio = document.getElementById('input-instagram-yukio').value.trim();
+        dadosServidor.telegramYukio = document.getElementById('input-telegram-yukio').value.trim();
+
         await fetch(`${API_URL}/api/configurar`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -252,31 +260,19 @@
     }
 
     async function salvarConfiguracoesServidor(mensagemSucesso = "Configurações salvas com sucesso!") {
-      const nomeBarbearia = document.getElementById('input-nome-barbearia').value.trim();
-      const whats = document.getElementById('input-whats-yukio').value.trim();
-      const instagram = document.getElementById('input-instagram-yukio').value.trim();
-      const telegram = document.getElementById('input-telegram-yukio').value.trim();
+      await salvarConfiguracoesSilencioso();
       const novaSenha = document.getElementById('input-nova-senha').value.trim();
-
-      if (nomeBarbearia) dadosServidor.nomeBarbearia = nomeBarbearia;
-      if (logoBase64Temp) dadosServidor.logoBarbearia = logoBase64Temp;
-      dadosServidor.whatsYukio = whats;
-      dadosServidor.instagramYukio = instagram;
-      dadosServidor.telegramYukio = telegram;
-      if (novaSenha) dadosServidor.senhaYukio = novaSenha;
-
-      try {
-        const res = await fetch(`${API_URL}/api/configurar`, {
+      if (novaSenha) {
+        dadosServidor.senhaYukio = novaSenha;
+        await fetch(`${API_URL}/api/configurar`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(dadosServidor)
         });
-        if (res.ok) {
-          if (novaSenha) document.getElementById('input-nova-senha').value = '';
-          alert(mensagemSucesso);
-          preencherCamposPainel();
-        } else { alert("Erro ao salvar no servidor."); }
-      } catch (err) { alert("Erro de conexão."); }
+        document.getElementById('input-nova-senha').value = '';
+      }
+      alert(mensagemSucesso);
+      preencherCamposPainel();
     }
 
     async function verificarSenha() {
@@ -332,7 +328,6 @@
             if (dadosServidor.agendamentos) {
               dadosServidor.agendamentos = dadosServidor.agendamentos.filter(ag => !(ag.data === dataSel && ag.horario === hora));
             }
-            await salvarConfiguracoesSilencioso();
           } else {
             const nomeCliente = prompt(`Nome do cliente para o horário das ${hora} (${dataSel}):`);
             if (!nomeCliente) return;
@@ -350,9 +345,8 @@
               horario: hora,
               whatsapp: telCliente
             });
-
-            await salvarConfiguracoesSilencioso();
           }
+          await salvarConfiguracoesSilencioso();
           renderizarHorariosBloqueioAdmin();
           renderizarListaAgendamentos();
         };
@@ -375,7 +369,6 @@
           ? "p-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg text-xs font-bold" 
           : "p-2 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg text-xs font-bold hover:border-zinc-700";
 
-        // AGORA CARREGA OS DADOS ATUALIZADOS DO SERVIDOR ANTES DE MUDAR A PAUSA
         btn.onclick = async () => {
           await carregarDadosServidor();
           if (!dadosServidor.horariosPausaPadrao) dadosServidor.horariosPausaPadrao = [];
@@ -487,24 +480,26 @@
         const isFechado = (dadosServidor.diasFechados || []).includes(dia.id);
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.onclick = () => toggleDia(dia.id);
+        
+        // CORREÇÃO DOS DIAS DA SEMANA: Atualiza os dados, salva em silêncio e redesenha
+        btn.onclick = async () => {
+          await carregarDadosServidor();
+          if (!dadosServidor.diasFechados) dadosServidor.diasFechados = [];
+          if (dadosServidor.diasFechados.includes(dia.id)) {
+            dadosServidor.diasFechados = dadosServidor.diasFechados.filter(d => d !== dia.id);
+          } else {
+            dadosServidor.diasFechados.push(dia.id);
+          }
+          await salvarConfiguracoesSilencioso();
+          renderizarDias();
+        };
+
         btn.className = isFechado 
           ? "p-3 bg-red-500/10 border border-red-500/40 text-red-400 font-bold rounded-xl flex flex-col items-center gap-1 text-xs" 
           : "p-3 bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-bold rounded-xl flex flex-col items-center gap-1 text-xs";
         btn.innerHTML = `<span>${dia.nome}</span><span class="text-[10px] px-2 py-0.5 rounded font-bold ${isFechado ? 'bg-red-500/20' : 'bg-emerald-500/20'}">${isFechado ? 'Fechado' : 'Aberto'}</span>`;
         container.appendChild(btn);
       });
-    }
-
-    async function toggleDia(idDia) {
-      if (!dadosServidor.diasFechados) dadosServidor.diasFechados = [];
-      if (dadosServidor.diasFechados.includes(idDia)) {
-        dadosServidor.diasFechados = dadosServidor.diasFechados.filter(d => d !== idDia);
-      } else {
-        dadosServidor.diasFechados.push(idDia);
-      }
-      renderizarDias();
-      await salvarConfiguracoesSilencioso();
     }
 
     function renderizarTudo() {
@@ -517,6 +512,11 @@
     }
 
     function sair() { window.location.href = 'index.html'; }
+
+    // Carregar dados iniciais ao abrir o painel
+    carregarDadosServidor().then(() => {
+      // Executado após o login bem-sucedido ou carregamento
+    });
   </script>
 </body>
 </html>
