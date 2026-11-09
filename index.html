@@ -42,7 +42,7 @@
         </div>
       </div>
 
-      <!-- PASSO 2 -->
+      <!-- PASSO 2: Horários Interativos -->
       <div id="step-2" class="p-5 space-y-5 hidden">
         <div>
           <label class="block text-xs font-bold uppercase text-zinc-400 mb-2">Selecione a Data</label>
@@ -55,39 +55,40 @@
         </div>
 
         <div id="wrapper-horarios">
-          <label class="block text-xs font-bold uppercase text-zinc-400 mb-2">Horários Disponíveis</label>
-          <p class="text-[11px] text-amber-500/80 mb-2" id="info-duracao-servico"></p>
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Horários de Início Disponíveis</label>
+          <p class="text-[11px] text-amber-500 mb-2" id="info-duracao-servico"></p>
           <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-60 overflow-y-auto pr-1" id="horarios-grid-cliente"></div>
         </div>
       </div>
 
-      <!-- PASSO 3: Proteção Anti-Trote -->
+      <!-- PASSO 3: Confirmação e Anti-Trote -->
       <div id="step-3" class="p-5 space-y-4 hidden">
         <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-400 flex items-start gap-2">
           <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
-          <span>Para evitar trotes e garantir o seu atendimento, informe um nome real e um número de WhatsApp válido para confirmação.</span>
+          <span>Informe o seu nome e WhatsApp/Telefone real para validar o seu agendamento.</span>
         </div>
         <div>
           <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Seu Nome Completo *</label>
           <input type="text" id="nome-cliente" placeholder="Ex: Kenji Tanaka" class="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-zinc-100 focus:outline-none">
         </div>
         <div>
-          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">WhatsApp / Telefone no Japão *</label>
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">WhatsApp / Telefone *</label>
           <input type="tel" id="whats-cliente" placeholder="Ex: 090-1234-5678" class="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-zinc-100 focus:outline-none">
-          <p class="text-[10px] text-zinc-500 mt-1">Necessário para validar o agendamento.</p>
         </div>
       </div>
 
-      <!-- PASSO 4 -->
+      <!-- PASSO 4: Envio Automático para os Canais do Barbeiro -->
       <div id="step-4" class="p-6 text-center space-y-4 hidden my-auto">
         <div class="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto border border-emerald-500/40 shadow-xl">
           <i data-lucide="check-circle-2" class="w-10 h-10"></i>
         </div>
         <div class="space-y-1">
           <h2 class="text-xl font-bold text-zinc-100">Agendamento Registado!</h2>
-          <p class="text-xs text-zinc-400 px-2" id="instrucao-envio">Clique abaixo para enviar os dados para a barbearia:</p>
+          <p class="text-xs text-zinc-400 px-2" id="instrucao-envio">Escolha o canal do barbeiro para enviar a mensagem instantânea:</p>
         </div>
-        <div id="container-botoes-canais" class="space-y-2 pt-2"></div>
+        
+        <div id="container-botoes-canais" class="space-y-2.5 pt-2"></div>
+
         <button onclick="location.reload()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs rounded-xl transition-all mt-3">
           Fazer Novo Agendamento
         </button>
@@ -117,7 +118,7 @@
     let horarioEscolhido = "";
     let horariosOcupadosPeloServico = [];
     let servicoEscolhido = null;
-    let dadosBackend = { servicos: [], horariosBloqueadosPorData: {}, horariosPausaPadrao: [], diasFechados: [] };
+    let dadosBackend = { servicos: [], horariosBloqueadosPorData: {}, horariosPausaPadrao: [], diasFechados: [], whatsYukio: "", instagramYukio: "", telegramYukio: "" };
 
     function gerarHorarios30min() {
       const lista = [];
@@ -246,7 +247,7 @@
 
       const duracaoServico = servicoEscolhido ? (servicoEscolhido.duracao || 30) : 30;
       const blocosNecessarios = Math.ceil(duracaoServico / 30);
-      document.getElementById('info-duracao-servico').innerText = `Duração: ${duracaoServico} min (${blocosNecessarios} blocos)`;
+      document.getElementById('info-duracao-servico').innerText = `Duração: ${duracaoServico} min (Ocupa ${blocosNecessarios} blocos)`;
 
       const bloqueadosPorData = dadosBackend.horariosBloqueadosPorData || {};
       const bloqueadosDoDia = bloqueadosPorData[dataSel] || [];
@@ -260,6 +261,7 @@
         let indisponivel = false;
         let horariosAfetadosTemp = [];
 
+        // Valida se há espaço livre consecutivo suficiente para a duração do serviço escolhido
         for (let b = 0; b < blocosNecessarios; b++) {
           const idxTarget = index + b;
           if (idxTarget >= horariosLista.length) {
@@ -321,14 +323,14 @@
         const nome = document.getElementById('nome-cliente').value.trim();
         const whats = document.getElementById('whats-cliente').value.trim();
         
-        // VALIDAÇÃO ANTI-TROTE: Impede nomes vazios ou números inventados muito curtos
+        // Validação anti-trote rigorosa
         if (!nome || nome.length < 3) { 
-          alert("Por favor, insira um nome válido!"); 
+          alert("Por favor, insira o seu nome completo!"); 
           return; 
         }
         const numerosWhats = whats.replace(/\D/g, '');
         if (!whats || numerosWhats.length < 8) {
-          alert("Por favor, insira um número de WhatsApp/Telefone válido (mínimo 8 dígitos) para confirmar o agendamento.");
+          alert("Por favor, insira um número de telefone/WhatsApp válido (mínimo 8 dígitos).");
           return;
         }
 
@@ -364,35 +366,68 @@
 
         const containerCanais = document.getElementById('container-botoes-canais');
         containerCanais.innerHTML = '';
-        let temCanais = false;
+        let temCanaisConfigurados = false;
 
+        // 1. Botão WhatsApp (se configurado no painel)
         if (dadosBackend.whatsYukio && dadosBackend.whatsYukio.trim() !== "") {
-          temCanais = true;
+          temCanaisConfigurados = true;
           let numeroFinal = formatarNumeroJapao(dadosBackend.whatsYukio);
           let linkWhats = `https://api.whatsapp.com/send?phone=${numeroFinal}&text=${encodeURIComponent(textoMensagem)}`;
+          
           let btnWhats = document.createElement('a');
           btnWhats.href = linkWhats;
           btnWhats.target = "_blank";
           btnWhats.className = "w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg";
-          btnWhats.innerHTML = `<i data-lucide="message-circle" class="w-4 h-4"></i> Enviar Confirmação via WhatsApp`;
+          btnWhats.innerHTML = `<i data-lucide="message-circle" class="w-4 h-4"></i> Enviar Mensagem via WhatsApp`;
           containerCanais.appendChild(btnWhats);
         }
 
+        // 2. Botão Instagram (se configurado no painel)
         if (dadosBackend.instagramYukio && dadosBackend.instagramYukio.trim() !== "") {
-          temCanais = true;
+          temCanaisConfigurados = true;
           let userIg = dadosBackend.instagramYukio.replace('@', '').trim();
           let linkIg = `https://instagram.com/${userIg}`;
+
           let btnIg = document.createElement('button');
           btnIg.type = "button";
           btnIg.className = "w-full py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg";
-          btnIg.innerHTML = `<i data-lucide="instagram" class="w-4 h-4"></i> Enviar via Instagram Direct`;
+          btnIg.innerHTML = `<i data-lucide="instagram" class="w-4 h-4"></i> Copiar & Enviar via Instagram Direct`;
+          
           btnIg.onclick = () => {
             navigator.clipboard.writeText(textoMensagem).then(() => {
-              alert("📋 Dados copiados! Cole no chat do Instagram.");
+              alert("📋 Mensagem copiada!\n\nCole no chat do Instagram Direct da barbearia.");
               window.open(linkIg, '_blank');
             }).catch(() => { window.open(linkIg, '_blank'); });
           };
           containerCanais.appendChild(btnIg);
+        }
+
+        // 3. Botão Telegram (se configurado no painel)
+        if (dadosBackend.telegramYukio && dadosBackend.telegramYukio.trim() !== "") {
+          temCanaisConfigurados = true;
+          let userTg = dadosBackend.telegramYukio.replace('@', '').trim();
+          let linkTg = `https://t.me/${userTg}?text=${encodeURIComponent(textoMensagem)}`;
+
+          let btnTg = document.createElement('a');
+          btnTg.href = linkTg;
+          btnTg.target = "_blank";
+          btnTg.className = "w-full py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg";
+          btnTg.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Enviar Mensagem via Telegram`;
+          containerCanais.appendChild(btnTg);
+        }
+
+        // Se nenhum canal específico estiver configurado no painel, exibe opção genérica copiada
+        if (!temCanaisConfigurados) {
+          let btnGenerico = document.createElement('button');
+          btnGenerico.type = "button";
+          btnGenerico.className = "w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg";
+          btnGenerico.innerHTML = `<i data-lucide="copy" class="w-4 h-4"></i> Copiar Dados do Agendamento`;
+          btnGenerico.onclick = () => {
+            navigator.clipboard.writeText(textoMensagem).then(() => {
+              alert("📋 Dados copiados com sucesso!");
+            });
+          };
+          containerCanais.appendChild(btnGenerico);
         }
 
         document.getElementById('step-3').classList.add('hidden');
