@@ -84,7 +84,7 @@
       </button>
     </div>
 
-    <!-- 3. NOVO: AGENDA DO DIA & MENSAGEM AUTOMÁTICA PARA CLIENTES -->
+    <!-- 3. AGENDA DO DIA & MENSAGEM AUTOMÁTICA -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-3">
         <i data-lucide="message-square-code" class="w-5 h-5 text-amber-500"></i> Gestão de Agenda & Mensagens do Dia
@@ -288,7 +288,6 @@
         const div = document.createElement('div');
         div.className = "p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-between gap-2";
         
-        // Formata link para mandar mensagem de lembrete no WhatsApp do cliente
         let numeroLimpo = (ag.whatsapp || '').replace(/\D/g, '');
         let linkWhatsCli = "#";
         if (numeroLimpo.length > 5) {
