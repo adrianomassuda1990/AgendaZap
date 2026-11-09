@@ -156,7 +156,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="grid-dias-semana"></div>
       </div>
 
-      <!-- Horários de Pausa Padrão (Gravação Instantânea ao Clicar) -->
+      <!-- Horários de Pausa Padrão -->
       <div class="pt-4 border-t border-zinc-800 space-y-2">
         <h3 class="text-sm font-bold text-zinc-200">Horários Padrão em que NÃO Atende (Pausas/Folgas Fixas)</h3>
         <p class="text-xs text-zinc-400">Verde = Disponível | Vermelho = Indisponível. Clica no horário e ele grava e altera a cor de imediato.</p>
@@ -264,9 +264,10 @@
         });
 
         if (res.ok) {
+          const dataRes = await res.json();
+          if (dataRes.banco) dadosServidor = dataRes.banco;
           if (novaSenha) document.getElementById('input-nova-senha').value = '';
           alert(mensagemSucesso);
-          await carregarDadosServidor();
           renderizarTudo();
         } else {
           alert("Erro ao salvar no servidor.");
@@ -347,20 +348,24 @@
             });
           }
           
-          await fetch(`${API_URL}/api/configurar`, {
+          const res = await fetch(`${API_URL}/api/configurar`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(dadosServidor)
           });
-          renderizarHorariosBloqueioAdmin();
-          renderizarListaAgendamentos();
+          if (res.ok) {
+            const dataRes = await res.json();
+            if (dataRes.banco) dadosServidor = dataRes.banco;
+            renderizarHorariosBloqueioAdmin();
+            renderizarListaAgendamentos();
+          }
         };
 
         grid.appendChild(div);
       });
     }
 
-    // PAUSAS FIXAS COM GRAVAÇÃO INSTANTÂNEA AO CLICAR (IGUAL AOS DIAS DA SEMANA)
+    // PAUSAS FIXAS COM GRAVAÇÃO INSTANTÂNEA AO CLICAR
     function renderizarHorariosPausaPadrao() {
       const grid = document.getElementById('grid-horarios-pausa-padrao');
       grid.innerHTML = '';
@@ -394,6 +399,8 @@
           });
 
           if (res.ok) {
+            const dataRes = await res.json();
+            if (dataRes.banco) dadosServidor = dataRes.banco;
             renderizarHorariosPausaPadrao();
           }
         };
@@ -410,9 +417,13 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dadosServidor)
-      }).then(() => {
-        renderizarHorariosBloqueioAdmin();
-        renderizarListaAgendamentos();
+      }).then(async (res) => {
+        if (res.ok) {
+          const dataRes = await res.json();
+          if (dataRes.banco) dadosServidor = dataRes.banco;
+          renderizarHorariosBloqueioAdmin();
+          renderizarListaAgendamentos();
+        }
       });
     }
 
@@ -441,12 +452,16 @@
 
     async function removerAgendamento(index) {
       dadosServidor.agendamentos.splice(index, 1);
-      await fetch(`${API_URL}/api/configurar`, {
+      const res = await fetch(`${API_URL}/api/configurar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dadosServidor)
       });
-      renderizarListaAgendamentos();
+      if (res.ok) {
+        const dataRes = await res.json();
+        if (dataRes.banco) dadosServidor = dataRes.banco;
+        renderizarListaAgendamentos();
+      }
     }
 
     function renderizarServicos() {
@@ -482,19 +497,32 @@
       document.getElementById('novo-servico-nome').value = '';
       document.getElementById('novo-servico-preco').value = '';
       document.getElementById('novo-servico-duracao').value = '';
-      renderizarServicos();
-      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      
+      const res = await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      if (res.ok) {
+        const dataRes = await res.json();
+        if (dataRes.banco) dadosServidor = dataRes.banco;
+        renderizarServicos();
+      }
     }
 
     async function atualizarServico(index, campo, valor) {
       dadosServidor.servicos[index][campo] = (campo === 'preco' || campo === 'duracao') ? Number(valor) : valor;
-      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      const res = await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      if (res.ok) {
+        const dataRes = await res.json();
+        if (dataRes.banco) dadosServidor = dataRes.banco;
+      }
     }
 
     async function removerServico(index) {
       dadosServidor.servicos.splice(index, 1);
-      renderizarServicos();
-      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      const res = await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      if (res.ok) {
+        const dataRes = await res.json();
+        if (dataRes.banco) dadosServidor = dataRes.banco;
+        renderizarServicos();
+      }
     }
 
     // DIAS DA SEMANA COM GRAVAÇÃO INSTANTÂNEA AO CLICAR
@@ -514,12 +542,16 @@
             dadosServidor.diasFechados.push(dia.id);
           }
 
-          await fetch(`${API_URL}/api/configurar`, {
+          const res = await fetch(`${API_URL}/api/configurar`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(dadosServidor)
           });
-          renderizarDias();
+          if (res.ok) {
+            const dataRes = await res.json();
+            if (dataRes.banco) dadosServidor = dataRes.banco;
+            renderizarDias();
+          }
         };
 
         btn.className = isFechado 
