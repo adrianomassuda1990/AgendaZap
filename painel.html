@@ -143,7 +143,7 @@
       <div class="space-y-2" id="lista-servicos-admin"></div>
     </div>
 
-    <!-- 6. DIAS DE FUNCIONAMENTO & PAUSAS RECORRENTES (COM BOTÃO DE SALVAR DEDICADO) -->
+    <!-- 6. DIAS DE FUNCIONAMENTO & PAUSAS RECORRENTES -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -163,7 +163,7 @@
         <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 bg-zinc-950 rounded-xl border border-zinc-800 max-h-48 overflow-y-auto" id="grid-horarios-pausa-padrao"></div>
       </div>
 
-      <!-- BOTÃO DE SALVAR DEDICADO PARA DIAS E PAUSAS -->
+      <!-- BOTÃO DE SALVAR DEDICADO -->
       <button onclick="salvarConfiguracoesServidor('Dias e horários de pausa guardados com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg">
         Guardar Dias e Horários de Pausa
       </button>
@@ -262,6 +262,9 @@
         const novaSenha = document.getElementById('input-nova-senha').value.trim();
         if (novaSenha) dadosServidor.senhaYukio = novaSenha;
 
+        if (!dadosServidor.horariosPausaPadrao) dadosServidor.horariosPausaPadrao = [];
+        if (!dadosServidor.diasFechados) dadosServidor.diasFechados = [];
+
         const res = await fetch(`${API_URL}/api/configurar`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -271,7 +274,8 @@
         if (res.ok) {
           if (novaSenha) document.getElementById('input-nova-senha').value = '';
           alert(mensagemSucesso);
-          carregarDadosServidor().then(renderizarTudo);
+          await carregarDadosServidor();
+          renderizarTudo();
         } else {
           alert("Erro ao salvar no servidor.");
         }
@@ -351,7 +355,6 @@
             });
           }
           
-          // Envia direto ao clicar no bloqueio manual por data
           const res = await fetch(`${API_URL}/api/configurar`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -367,7 +370,6 @@
       });
     }
 
-    // PAUSAS FIXAS (Modifica localmente e guarda ao carregar no botão Guardar)
     function renderizarHorariosPausaPadrao() {
       const grid = document.getElementById('grid-horarios-pausa-padrao');
       grid.innerHTML = '';
@@ -392,7 +394,6 @@
           } else {
             dadosServidor.horariosPausaPadrao.push(hora);
           }
-          // Apenas redesenha localmente para veres a cor mudar; clica no botão "Guardar" no fim para gravar no servidor!
           renderizarHorariosPausaPadrao();
         };
         grid.appendChild(btn);
@@ -495,7 +496,6 @@
       await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
     }
 
-    // DIAS DA SEMANA (Modifica localmente e guarda ao clicar no botão Guardar)
     function renderizarDias() {
       const container = document.getElementById('grid-dias-semana');
       container.innerHTML = '';
