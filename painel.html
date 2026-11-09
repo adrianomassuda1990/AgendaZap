@@ -152,21 +152,16 @@
       </div>
       
       <div class="space-y-2">
-        <label class="block text-xs font-bold uppercase text-zinc-400">Dias da Semana</label>
+        <label class="block text-xs font-bold uppercase text-zinc-400">Dias da Semana (Clica para alternar)</label>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="grid-dias-semana"></div>
       </div>
 
-      <!-- Horários de Pausa Padrão -->
+      <!-- Horários de Pausa Padrão (Gravação Instantânea ao Clicar) -->
       <div class="pt-4 border-t border-zinc-800 space-y-2">
         <h3 class="text-sm font-bold text-zinc-200">Horários Padrão em que NÃO Atende (Pausas/Folgas Fixas)</h3>
-        <p class="text-xs text-zinc-400">Verde = Disponível | Vermelho = Indisponível (Pausa). Clica nos horários para alterar e depois clica no botão abaixo para guardar.</p>
+        <p class="text-xs text-zinc-400">Verde = Disponível | Vermelho = Indisponível. Clica no horário e ele grava e altera a cor de imediato.</p>
         <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 bg-zinc-950 rounded-xl border border-zinc-800 max-h-48 overflow-y-auto" id="grid-horarios-pausa-padrao"></div>
       </div>
-
-      <!-- BOTÃO DE SALVAR DEDICADO -->
-      <button onclick="salvarConfiguracoesServidor('Dias e horários de pausa guardados com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg">
-        Guardar Dias e Horários de Pausa
-      </button>
     </div>
 
     <!-- 7. SEGURANÇA DO PAINEL -->
@@ -262,9 +257,6 @@
         const novaSenha = document.getElementById('input-nova-senha').value.trim();
         if (novaSenha) dadosServidor.senhaYukio = novaSenha;
 
-        if (!dadosServidor.horariosPausaPadrao) dadosServidor.horariosPausaPadrao = [];
-        if (!dadosServidor.diasFechados) dadosServidor.diasFechados = [];
-
         const res = await fetch(`${API_URL}/api/configurar`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -355,21 +347,20 @@
             });
           }
           
-          const res = await fetch(`${API_URL}/api/configurar`, {
+          await fetch(`${API_URL}/api/configurar`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(dadosServidor)
           });
-          if (res.ok) {
-            renderizarHorariosBloqueioAdmin();
-            renderizarListaAgendamentos();
-          }
+          renderizarHorariosBloqueioAdmin();
+          renderizarListaAgendamentos();
         };
 
         grid.appendChild(div);
       });
     }
 
+    // PAUSAS FIXAS COM GRAVAÇÃO INSTANTÂNEA AO CLICAR (IGUAL AOS DIAS DA SEMANA)
     function renderizarHorariosPausaPadrao() {
       const grid = document.getElementById('grid-horarios-pausa-padrao');
       grid.innerHTML = '';
@@ -386,7 +377,7 @@
         
         btn.innerHTML = `<span>${hora}</span><span class="text-[10px] px-1.5 py-0.2 rounded font-bold ${isPausa ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}">${isPausa ? 'Indisponível' : 'Disponível'}</span>`;
 
-        btn.onclick = () => {
+        btn.onclick = async () => {
           if (!dadosServidor.horariosPausaPadrao) dadosServidor.horariosPausaPadrao = [];
 
           if (dadosServidor.horariosPausaPadrao.includes(hora)) {
@@ -394,7 +385,17 @@
           } else {
             dadosServidor.horariosPausaPadrao.push(hora);
           }
-          renderizarHorariosPausaPadrao();
+
+          // GRAVA IMEDIATAMENTE NO SERVIDOR AO CLICAR
+          const res = await fetch(`${API_URL}/api/configurar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dadosServidor)
+          });
+
+          if (res.ok) {
+            renderizarHorariosPausaPadrao();
+          }
         };
         grid.appendChild(btn);
       });
@@ -496,6 +497,7 @@
       await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
     }
 
+    // DIAS DA SEMANA COM GRAVAÇÃO INSTANTÂNEA AO CLICAR
     function renderizarDias() {
       const container = document.getElementById('grid-dias-semana');
       container.innerHTML = '';
@@ -504,13 +506,19 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         
-        btn.onclick = () => {
+        btn.onclick = async () => {
           if (!dadosServidor.diasFechados) dadosServidor.diasFechados = [];
           if (dadosServidor.diasFechados.includes(dia.id)) {
             dadosServidor.diasFechados = dadosServidor.diasFechados.filter(d => d !== dia.id);
           } else {
             dadosServidor.diasFechados.push(dia.id);
           }
+
+          await fetch(`${API_URL}/api/configurar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dadosServidor)
+          });
           renderizarDias();
         };
 
