@@ -143,21 +143,30 @@
       <div class="space-y-2" id="lista-servicos-admin"></div>
     </div>
 
-    <!-- 6. DIAS DE FUNCIONAMENTO & PAUSAS RECORRENTES -->
+    <!-- 6. DIAS DE FUNCIONAMENTO & PAUSAS RECORRENTES (COM BOTÃO DE SALVAR DEDICADO) -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
-          <i data-lucide="calendar-off" class="w-5 h-5 text-amber-500"></i> Dias de Funcionamento (Semanais)
+          <i data-lucide="calendar-off" class="w-5 h-5 text-amber-500"></i> Dias de Funcionamento & Pausas Fixas
         </h2>
       </div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="grid-dias-semana"></div>
+      
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase text-zinc-400">Dias da Semana</label>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="grid-dias-semana"></div>
+      </div>
 
       <!-- Horários de Pausa Padrão -->
       <div class="pt-4 border-t border-zinc-800 space-y-2">
         <h3 class="text-sm font-bold text-zinc-200">Horários Padrão em que NÃO Atende (Pausas/Folgas Fixas)</h3>
-        <p class="text-xs text-zinc-400">Verde = Disponível | Vermelho = Indisponível (Pausa)</p>
+        <p class="text-xs text-zinc-400">Verde = Disponível | Vermelho = Indisponível (Pausa). Clica nos horários para alterar e depois clica no botão abaixo para guardar.</p>
         <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 bg-zinc-950 rounded-xl border border-zinc-800 max-h-48 overflow-y-auto" id="grid-horarios-pausa-padrao"></div>
       </div>
+
+      <!-- BOTÃO DE SALVAR DEDICADO PARA DIAS E PAUSAS -->
+      <button onclick="salvarConfiguracoesServidor('Dias e horários de pausa guardados com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg">
+        Guardar Dias e Horários de Pausa
+      </button>
     </div>
 
     <!-- 7. SEGURANÇA DO PAINEL -->
@@ -241,8 +250,7 @@
       } catch (err) { console.error("Erro ao carregar dados:", err); }
     }
 
-    // SALVAMENTO GARANTIDO COM AWAIT
-    async function salvarConfiguracoesSilencioso() {
+    async function salvarConfiguracoesServidor(mensagemSucesso = "Configurações salvas com sucesso!") {
       try {
         const nomeBarbearia = document.getElementById('input-nome-barbearia').value.trim();
         if (nomeBarbearia) dadosServidor.nomeBarbearia = nomeBarbearia;
@@ -251,28 +259,25 @@
         dadosServidor.instagramYukio = document.getElementById('input-instagram-yukio').value.trim();
         dadosServidor.telegramYukio = document.getElementById('input-telegram-yukio').value.trim();
 
-        await fetch(`${API_URL}/api/configurar`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dadosServidor)
-        });
-      } catch (err) { console.error("Erro de conexão.", err); }
-    }
+        const novaSenha = document.getElementById('input-nova-senha').value.trim();
+        if (novaSenha) dadosServidor.senhaYukio = novaSenha;
 
-    async function salvarConfiguracoesServidor(mensagemSucesso = "Configurações salvas com sucesso!") {
-      await salvarConfiguracoesSilencioso();
-      const novaSenha = document.getElementById('input-nova-senha').value.trim();
-      if (novaSenha) {
-        dadosServidor.senhaYukio = novaSenha;
-        await fetch(`${API_URL}/api/configurar`, {
+        const res = await fetch(`${API_URL}/api/configurar`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(dadosServidor)
         });
-        document.getElementById('input-nova-senha').value = '';
+
+        if (res.ok) {
+          if (novaSenha) document.getElementById('input-nova-senha').value = '';
+          alert(mensagemSucesso);
+          carregarDadosServidor().then(renderizarTudo);
+        } else {
+          alert("Erro ao salvar no servidor.");
+        }
+      } catch (err) { 
+        alert("Erro de conexão."); 
       }
-      alert(mensagemSucesso);
-      preencherCamposPainel();
     }
 
     async function verificarSenha() {
@@ -345,16 +350,24 @@
               whatsapp: telCliente
             });
           }
-          await salvarConfiguracoesSilencioso();
-          renderizarHorariosBloqueioAdmin();
-          renderizarListaAgendamentos();
+          
+          // Envia direto ao clicar no bloqueio manual por data
+          const res = await fetch(`${API_URL}/api/configurar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dadosServidor)
+          });
+          if (res.ok) {
+            renderizarHorariosBloqueioAdmin();
+            renderizarListaAgendamentos();
+          }
         };
 
         grid.appendChild(div);
       });
     }
 
-    // PAUSAS FIXAS COM SALVAMENTO SÍNCRONO REAL (AGUARDA O SERVIDOR)
+    // PAUSAS FIXAS (Modifica localmente e guarda ao carregar no botão Guardar)
     function renderizarHorariosPausaPadrao() {
       const grid = document.getElementById('grid-horarios-pausa-padrao');
       grid.innerHTML = '';
@@ -371,7 +384,7 @@
         
         btn.innerHTML = `<span>${hora}</span><span class="text-[10px] px-1.5 py-0.2 rounded font-bold ${isPausa ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}">${isPausa ? 'Indisponível' : 'Disponível'}</span>`;
 
-        btn.onclick = async () => {
+        btn.onclick = () => {
           if (!dadosServidor.horariosPausaPadrao) dadosServidor.horariosPausaPadrao = [];
 
           if (dadosServidor.horariosPausaPadrao.includes(hora)) {
@@ -379,9 +392,7 @@
           } else {
             dadosServidor.horariosPausaPadrao.push(hora);
           }
-          
-          // AGUARDA O SERVIDOR GUARDAR ANTES DE ATUALIZAR O VISUAL
-          await salvarConfiguracoesSilencioso();
+          // Apenas redesenha localmente para veres a cor mudar; clica no botão "Guardar" no fim para gravar no servidor!
           renderizarHorariosPausaPadrao();
         };
         grid.appendChild(btn);
@@ -393,7 +404,11 @@
       if (dadosServidor.horariosBloqueadosPorData) {
         delete dadosServidor.horariosBloqueadosPorData[dataSel];
       }
-      salvarConfiguracoesSilencioso().then(() => {
+      fetch(`${API_URL}/api/configurar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dadosServidor)
+      }).then(() => {
         renderizarHorariosBloqueioAdmin();
         renderizarListaAgendamentos();
       });
@@ -424,7 +439,11 @@
 
     async function removerAgendamento(index) {
       dadosServidor.agendamentos.splice(index, 1);
-      await salvarConfiguracoesSilencioso();
+      await fetch(`${API_URL}/api/configurar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dadosServidor)
+      });
       renderizarListaAgendamentos();
     }
 
@@ -462,20 +481,21 @@
       document.getElementById('novo-servico-preco').value = '';
       document.getElementById('novo-servico-duracao').value = '';
       renderizarServicos();
-      await salvarConfiguracoesSilencioso();
+      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
     }
 
     async function atualizarServico(index, campo, valor) {
       dadosServidor.servicos[index][campo] = (campo === 'preco' || campo === 'duracao') ? Number(valor) : valor;
-      await salvarConfiguracoesSilencioso();
+      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
     }
 
     async function removerServico(index) {
       dadosServidor.servicos.splice(index, 1);
       renderizarServicos();
-      await salvarConfiguracoesSilencioso();
+      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
     }
 
+    // DIAS DA SEMANA (Modifica localmente e guarda ao clicar no botão Guardar)
     function renderizarDias() {
       const container = document.getElementById('grid-dias-semana');
       container.innerHTML = '';
@@ -484,20 +504,19 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         
-        btn.onclick = async () => {
+        btn.onclick = () => {
           if (!dadosServidor.diasFechados) dadosServidor.diasFechados = [];
           if (dadosServidor.diasFechados.includes(dia.id)) {
             dadosServidor.diasFechados = dadosServidor.diasFechados.filter(d => d !== dia.id);
           } else {
             dadosServidor.diasFechados.push(dia.id);
           }
-          await salvarConfiguracoesSilencioso();
           renderizarDias();
         };
 
         btn.className = isFechado 
-          ? "p-3 bg-red-500/10 border border-red-500/40 text-red-400 font-bold rounded-xl flex flex-col items-center gap-1 text-xs" 
-          : "p-3 bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-bold rounded-xl flex flex-col items-center gap-1 text-xs";
+          ? "p-3 bg-red-500/10 border border-red-500/40 text-red-400 font-bold rounded-xl flex flex-col items-center gap-1 text-xs transition-all" 
+          : "p-3 bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-bold rounded-xl flex flex-col items-center gap-1 text-xs transition-all";
         btn.innerHTML = `<span>${dia.nome}</span><span class="text-[10px] px-2 py-0.5 rounded font-bold ${isFechado ? 'bg-red-500/20' : 'bg-emerald-500/20'}">${isFechado ? 'Fechado' : 'Aberto'}</span>`;
         container.appendChild(btn);
       });
