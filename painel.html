@@ -62,14 +62,14 @@
       </button>
     </div>
 
-    <!-- 2. BLOQUEIO MANUAL DE HORÁRIOS POR DATA -->
+    <!-- 2. BLOQUEIO MANUAL E REGISTO DE CLIENTES -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
-          <i data-lucide="clock" class="w-5 h-5 text-amber-500"></i> Bloquear / Desbloquear Horários Manualmente
+          <i data-lucide="clock" class="w-5 h-5 text-amber-500"></i> Marcar ou Bloquear Horário Manualmente
         </h2>
       </div>
-      <p class="text-xs text-zinc-400">Escolha uma data e clique nos horários para bloqueá-los ou reativá-los na agenda dos clientes.</p>
+      <p class="text-xs text-zinc-400">Escolha a data e clique num horário livre para registar o cliente e fechar o horário, ou clique num horário vermelho para o desbloquear.</p>
       
       <div class="space-y-3">
         <div>
@@ -80,11 +80,11 @@
       </div>
     </div>
 
-    <!-- 3. AGENDAMENTOS REGISTADOS (PARA CONTROLAR TROTES) -->
+    <!-- 3. AGENDAMENTOS REGISTADOS -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
-          <i data-lucide="users" class="w-5 h-5 text-amber-500"></i> Agendamentos Atuais na Base de Dados
+          <i data-lucide="users" class="w-5 h-5 text-amber-500"></i> Lista de Agendamentos (Controlo e Telemóveis)
         </h2>
         <button onclick="carregarDadosServidor().then(renderizarTudo)" class="text-xs text-amber-500 hover:underline flex items-center gap-1">
           <i data-lucide="refresh-cw" class="w-3 h-3"></i> Atualizar Lista
@@ -95,7 +95,7 @@
       </div>
     </div>
 
-    <!-- 4. CANAIS ATIVOS -->
+    <!-- 4. CANAIS ATIVOS (WHATSAPP, INSTAGRAM, TELEGRAM) -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -298,13 +298,35 @@
           if (!dadosServidor.horariosBloqueadosPorData[dataSel]) {
             dadosServidor.horariosBloqueadosPorData[dataSel] = [];
           }
+
           if (isBloqueado) {
             dadosServidor.horariosBloqueadosPorData[dataSel] = dadosServidor.horariosBloqueadosPorData[dataSel].filter(h => h !== hora);
+            if (dadosServidor.agendamentos) {
+              dadosServidor.agendamentos = dadosServidor.agendamentos.filter(ag => !(ag.data === dataSel && ag.horario === hora));
+            }
+            await salvarConfiguracoesServidor("Horário desbloqueado!");
           } else {
+            const nomeCliente = prompt(`Nome do cliente para o horário das ${hora} (${dataSel}):`);
+            if (!nomeCliente) return;
+
+            const telCliente = prompt(`Número de WhatsApp/Telemóvel do cliente (${nomeCliente}):`) || "Não informado";
+
             dadosServidor.horariosBloqueadosPorData[dataSel].push(hora);
+            
+            if (!dadosServidor.agendamentos) dadosServidor.agendamentos = [];
+            dadosServidor.agendamentos.push({
+              cliente: nomeCliente + " (Manual)",
+              servico: "Atendimento Presencial",
+              preco: 0,
+              data: dataSel,
+              horario: hora,
+              whatsapp: telCliente
+            });
+
+            await salvarConfiguracoesServidor("Agendamento manual com contacto guardado!");
           }
-          await salvarConfiguracoesServidor("Horário atualizado!");
           renderizarHorariosBloqueioAdmin();
+          renderizarListaAgendamentos();
         };
         grid.appendChild(btn);
       });
