@@ -152,11 +152,11 @@
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="grid-dias-semana"></div>
 
-      <!-- Horários de Pausa Padrão -->
+      <!-- Horários de Pausa Padrão (Agora com Cores Iguais aos Dias da Semana) -->
       <div class="pt-4 border-t border-zinc-800 space-y-2">
         <h3 class="text-sm font-bold text-zinc-200">Horários Padrão em que NÃO Atende (Pausas/Folgas Fixas)</h3>
-        <p class="text-xs text-zinc-400">Clique nos horários abaixo para fechá-los por defeito em todos os dias (ex: horário de almoço ou descanso).</p>
-        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 bg-zinc-950 rounded-xl border border-zinc-800 max-h-40 overflow-y-auto" id="grid-horarios-pausa-padrao"></div>
+        <p class="text-xs text-zinc-400">Verde = Disponível | Vermelho = Indisponível (Pausa)</p>
+        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 bg-zinc-950 rounded-xl border border-zinc-800 max-h-48 overflow-y-auto" id="grid-horarios-pausa-padrao"></div>
       </div>
     </div>
 
@@ -241,7 +241,6 @@
       } catch (err) { console.error("Erro ao carregar dados:", err); }
     }
 
-    // SALVAMENTO ROBUSTO: Envia o objeto completo atualizado para o servidor
     async function salvarConfiguracoesSilencioso() {
       try {
         const nomeBarbearia = document.getElementById('input-nome-barbearia').value.trim();
@@ -355,6 +354,7 @@
       });
     }
 
+    // HORÁRIOS DE PAUSA COM CORES DINÂMICAS IGUAIS AOS DIAS DA SEMANA (Verde = Aberto/Disponível, Vermelho = Fechado/Indisponível)
     function renderizarHorariosPausaPadrao() {
       const grid = document.getElementById('grid-horarios-pausa-padrao');
       grid.innerHTML = '';
@@ -364,10 +364,13 @@
         const isPausa = dadosServidor.horariosPausaPadrao.includes(hora);
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.innerText = hora;
+        
+        // Se for pausa (indisponível), fica vermelho. Se estiver livre, fica verde igual aos dias!
         btn.className = isPausa 
-          ? "p-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg text-xs font-bold" 
-          : "p-2 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg text-xs font-bold hover:border-zinc-700";
+          ? "p-2.5 bg-red-500/10 border border-red-500/40 text-red-400 font-bold rounded-xl flex flex-col items-center gap-0.5 text-xs transition-all" 
+          : "p-2.5 bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-bold rounded-xl flex flex-col items-center gap-0.5 text-xs transition-all";
+        
+        btn.innerHTML = `<span>${hora}</span><span class="text-[10px] px-1.5 py-0.2 rounded font-bold ${isPausa ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}">${isPausa ? 'Indisponível' : 'Disponível'}</span>`;
 
         btn.onclick = async () => {
           await carregarDadosServidor();
@@ -481,7 +484,6 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         
-        // CORREÇÃO DOS DIAS DA SEMANA: Atualiza os dados, salva em silêncio e redesenha
         btn.onclick = async () => {
           await carregarDadosServidor();
           if (!dadosServidor.diasFechados) dadosServidor.diasFechados = [];
@@ -513,9 +515,8 @@
 
     function sair() { window.location.href = 'index.html'; }
 
-    // Carregar dados iniciais ao abrir o painel
     carregarDadosServidor().then(() => {
-      // Executado após o login bem-sucedido ou carregamento
+      // Carregado com sucesso
     });
   </script>
 </body>
