@@ -40,10 +40,10 @@
       </button>
     </div>
 
-    <!-- 1. IDENTIDADE VISUAL -->
+    <!-- 1. IDENTIDADE VISUAL & LOGÓTIPO DO TELEMÓVEL -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-3">
-        <i data-lucide="image" class="w-5 h-5 text-amber-500"></i> Identidade Visual & Nome
+        <i data-lucide="image" class="w-5 h-5 text-amber-500"></i> Nome & Logótipo
       </h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="space-y-2">
@@ -51,9 +51,14 @@
           <input type="text" id="input-nome-barbearia" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
         </div>
         <div class="space-y-2">
-          <label class="block text-xs font-bold uppercase text-zinc-400">URL do Logótipo (Imagem)</label>
-          <input type="text" id="input-logo-url" placeholder="https://..." class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
+          <label class="block text-xs font-bold uppercase text-zinc-400">Carregar Logótipo do Telemóvel/PC</label>
+          <input type="file" id="input-arquivo-logo" accept="image/*" onchange="converterLogoParaBase64(this)" class="w-full p-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-400 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-zinc-950 hover:file:bg-amber-600">
         </div>
+      </div>
+      <!-- Pré-visualização do Logo -->
+      <div id="preview-logo-container" class="hidden items-center gap-3 pt-2">
+        <span class="text-xs text-zinc-400">Logótipo carregado:</span>
+        <img id="preview-logo-img" src="" class="w-12 h-12 rounded-full object-cover border border-amber-500/50">
       </div>
       <button onclick="salvarConfiguracoesServidor('Identidade atualizada com sucesso!')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all">
         Guardar Identidade
@@ -71,7 +76,7 @@
           <input type="tel" id="input-whats-yukio" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
         </div>
         <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2">
-          <label class="block text-xs font-bold uppercase text-zinc-400">Instagram</label>
+          <label class="block text-xs font-bold uppercase text-zinc-400">Instagram (@)</label>
           <input type="text" id="input-instagram-yukio" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:outline-none">
         </div>
         <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2">
@@ -84,18 +89,18 @@
       </button>
     </div>
 
-    <!-- 3. AGENDA DO DIA & MENSAGEM AUTOMÁTICA -->
+    <!-- 3. AGENDA DO DIA & MENSAGENS AUTOMÁTICAS (WhatsApp / Instagram / Telegram) -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-3">
-        <i data-lucide="message-square-code" class="w-5 h-5 text-amber-500"></i> Gestão de Agenda & Mensagens do Dia
+        <i data-lucide="message-square-code" class="w-5 h-5 text-amber-500"></i> Mensagens Automáticas para Clientes do Dia
       </h2>
       <div class="flex flex-col sm:flex-row gap-3 items-center bg-zinc-950 p-4 rounded-xl border border-zinc-800">
         <div class="w-full sm:w-auto flex-1">
-          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Selecionar Data para Ver Clientes</label>
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Selecionar Data da Agenda</label>
           <input type="date" id="filtro-data-agenda" onchange="renderizarAgendaDoDia()" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-amber-500 font-bold focus:outline-none">
         </div>
       </div>
-      <div id="lista-agendamentos-dia" class="space-y-2 max-h-60 overflow-y-auto">
+      <div id="lista-agendamentos-dia" class="space-y-3 max-h-72 overflow-y-auto">
         <p class="text-xs text-zinc-500 text-center py-4">Selecione uma data para ver os clientes agendados.</p>
       </div>
     </div>
@@ -220,9 +225,22 @@
       }
     }
 
+    function converterLogoParaBase64(input) {
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          dadosServidor.logoUrl = e.target.result;
+          document.getElementById('preview-logo-img').src = e.target.result;
+          document.getElementById('preview-logo-container').classList.remove('hidden');
+          document.getElementById('preview-logo-container').classList.add('flex');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
     async function salvarConfiguracoesServidor(mensagemSucesso = "Configurações salvas!") {
       dadosServidor.nomeBarbearia = document.getElementById('input-nome-barbearia').value.trim() || "Barbearia";
-      dadosServidor.logoUrl = document.getElementById('input-logo-url').value.trim();
       dadosServidor.whatsYukio = document.getElementById('input-whats-yukio').value.trim();
       dadosServidor.instagramYukio = document.getElementById('input-instagram-yukio').value.trim();
       
@@ -258,10 +276,15 @@
         document.getElementById('admin-content').classList.remove('hidden');
         
         document.getElementById('input-nome-barbearia').value = dadosServidor.nomeBarbearia || "";
-        document.getElementById('input-logo-url').value = dadosServidor.logoUrl || "";
         document.getElementById('input-whats-yukio').value = dadosServidor.whatsYukio || "";
         document.getElementById('input-instagram-yukio').value = dadosServidor.instagramYukio || "";
         document.getElementById('titulo-topo-admin').innerText = dadosServidor.nomeBarbearia;
+
+        if (dadosServidor.logoUrl) {
+          document.getElementById('preview-logo-img').src = dadosServidor.logoUrl;
+          document.getElementById('preview-logo-container').classList.remove('hidden');
+          document.getElementById('preview-logo-container').classList.add('flex');
+        }
         
         renderizarTudo();
       } else {
@@ -286,14 +309,15 @@
 
       doDia.forEach(ag => {
         const div = document.createElement('div');
-        div.className = "p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-between gap-2";
+        div.className = "p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3";
         
+        const textoLembrete = `Olá ${ag.cliente}, tudo bem? Aqui é da ${dadosServidor.nomeBarbearia || 'Barbearia'}. Passando para lembrar do seu agendamento hoje às ${ag.horario} (${ag.servico}). Confirmado?`;
+
         let numeroLimpo = (ag.whatsapp || '').replace(/\D/g, '');
-        let linkWhatsCli = "#";
+        let linkWhats = "#";
         if (numeroLimpo.length > 5) {
           if (!numeroLimpo.startsWith('81')) numeroLimpo = '81' + numeroLimpo;
-          const textoLembrete = `Olá ${ag.cliente}, tudo bem? Aqui é da ${dadosServidor.nomeBarbearia || 'Barbearia'}. Passando para lembrar do seu agendamento hoje às ${ag.horario} (${ag.servico}). Confirmado?`;
-          linkWhatsCli = `https://api.whatsapp.com/send?phone=${numeroLimpo}&text=${encodeURIComponent(textoLembrete)}`;
+          linkWhats = `https://api.whatsapp.com/send?phone=${numeroLimpo}&text=${encodeURIComponent(textoLembrete)}`;
         }
 
         div.innerHTML = `
@@ -301,14 +325,26 @@
             <div class="text-sm font-bold text-amber-500">${ag.horario} - ${ag.cliente}</div>
             <div class="text-xs text-zinc-400">${ag.servico} | Contato: ${ag.whatsapp}</div>
           </div>
-          ${numeroLimpo.length > 5 ? `
-            <a href="${linkWhatsCli}" target="_blank" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1">
-              <i data-lucide="message-circle" class="w-4 h-4"></i> Enviar Lembrete
-            </a>` : `<span class="text-[10px] text-zinc-500">Sem WhatsApp</span>`}
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            ${numeroLimpo.length > 5 ? `
+              <a href="${linkWhats}" target="_blank" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 justify-center flex-1 sm:flex-initial">
+                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp
+              </a>` : ''}
+            <button onclick="copiarMensagemLembrete('${ag.cliente}', '${ag.horario}', '${ag.servico}')" class="px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 justify-center flex-1 sm:flex-initial">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar Msg (IG/Telegram)
+            </button>
+          </div>
         `;
         container.appendChild(div);
       });
       lucide.createIcons();
+    }
+
+    function copiarMensagemLembrete(cliente, horario, servico) {
+      const texto = `Olá ${cliente}, tudo bem? Aqui é da ${dadosServidor.nomeBarbearia || 'Barbearia'}. Passando para lembrar do seu agendamento hoje às ${horario} (${servico}). Confirmado?`;
+      navigator.clipboard.writeText(texto).then(() => {
+        alert("📋 Mensagem copiada com sucesso!\n\nPodes colá-la no chat do Instagram Direct ou Telegram do cliente.");
+      });
     }
 
     function renderizarServicos() {
