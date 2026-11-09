@@ -40,7 +40,7 @@
       </button>
     </div>
 
-    <!-- 1. IDENTIDADE VISUAL (NOME E LOGO) -->
+    <!-- 1. IDENTIDADE VISUAL -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -62,7 +62,7 @@
       </button>
     </div>
 
-    <!-- 2. BLOQUEIO DE HORÁRIOS POR DATA ESPECÍFICA -->
+    <!-- 2. BLOQUEIO DE HORÁRIOS POR DATA -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -99,7 +99,7 @@
       </div>
     </div>
 
-    <!-- 4. CANAIS ATIVOS (WHATSAPP, INSTAGRAM, TELEGRAM) -->
+    <!-- 4. CANAIS ATIVOS -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -322,6 +322,7 @@
         `;
 
         div.onclick = async () => {
+          await carregarDadosServidor();
           if (!dadosServidor.horariosBloqueadosPorData[dataSel]) {
             dadosServidor.horariosBloqueadosPorData[dataSel] = [];
           }
@@ -374,8 +375,12 @@
           ? "p-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg text-xs font-bold" 
           : "p-2 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-lg text-xs font-bold hover:border-zinc-700";
 
+        // AGORA CARREGA OS DADOS ATUALIZADOS DO SERVIDOR ANTES DE MUDAR A PAUSA
         btn.onclick = async () => {
-          if (isPausa) {
+          await carregarDadosServidor();
+          if (!dadosServidor.horariosPausaPadrao) dadosServidor.horariosPausaPadrao = [];
+
+          if (dadosServidor.horariosPausaPadrao.includes(hora)) {
             dadosServidor.horariosPausaPadrao = dadosServidor.horariosPausaPadrao.filter(h => h !== hora);
           } else {
             dadosServidor.horariosPausaPadrao.push(hora);
@@ -512,11 +517,6 @@
     }
 
     function sair() { window.location.href = 'index.html'; }
-
-    // Carregar dados iniciais ao abrir o painel
-    carregarDadosServidor().then(() => {
-      // Tenta carregar automaticamente se já houver sessão
-    });
   </script>
 </body>
 </html>
