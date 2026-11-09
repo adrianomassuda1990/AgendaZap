@@ -62,7 +62,7 @@
       </button>
     </div>
 
-    <!-- 2. BLOQUEIO DE HORÁRIOS POR DATA ESPECÍFICA (COM ON/OFF E REGISTO DE CLIENTE) -->
+    <!-- 2. BLOQUEIO DE HORÁRIOS POR DATA ESPECÍFICA -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
@@ -321,23 +321,20 @@
           </span>
         `;
 
-        // CLICAR NO HORÁRIO ABRE A PERGUNTA DO CLIENTE OU DESBLOQUEIA
         div.onclick = async () => {
           if (!dadosServidor.horariosBloqueadosPorData[dataSel]) {
             dadosServidor.horariosBloqueadosPorData[dataSel] = [];
           }
 
           if (isBloqueado) {
-            // Se estiver bloqueado (Off), pergunta se quer desbloquear
             dadosServidor.horariosBloqueadosPorData[dataSel] = dadosServidor.horariosBloqueadosPorData[dataSel].filter(h => h !== hora);
             if (dadosServidor.agendamentos) {
               dadosServidor.agendamentos = dadosServidor.agendamentos.filter(ag => !(ag.data === dataSel && ag.horario === hora));
             }
             await salvarConfiguracoesSilencioso();
           } else {
-            // Se estiver livre (On), pede o nome e o telemóvel para registar a reserva manual
             const nomeCliente = prompt(`Nome do cliente para o horário das ${hora} (${dataSel}):`);
-            if (!nomeCliente) return; // Se cancelar, não faz nada
+            if (!nomeCliente) return;
 
             const telCliente = prompt(`Número de WhatsApp/Telemóvel do cliente (${nomeCliente}):`) || "Não informado";
 
@@ -515,6 +512,11 @@
     }
 
     function sair() { window.location.href = 'index.html'; }
+
+    // Carregar dados iniciais ao abrir o painel
+    carregarDadosServidor().then(() => {
+      // Tenta carregar automaticamente se já houver sessão
+    });
   </script>
 </body>
 </html>
