@@ -62,11 +62,11 @@
       </button>
     </div>
 
-    <!-- 2. BLOQUEIO DE HORÁRIOS POR DATA ESPECÍFICA (COM ON/OFF E RESERVA MANUAL) -->
+    <!-- 2. BLOQUEIO DE HORÁRIOS POR DATA ESPECÍFICA (COM ON/OFF E REGISTO DE CLIENTE) -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
         <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
-          <i data-lucide="clock" class="w-5 h-5 text-amber-500"></i> Bloqueio de Horários por Data Específica
+          <i data-lucide="clock" class="w-5 h-5 text-amber-500"></i> Marcar ou Bloquear Horário Manualmente
         </h2>
       </div>
       
@@ -152,7 +152,7 @@
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="grid-dias-semana"></div>
 
-      <!-- NOVA SECÇÃO: Horários que ele NÃO atende por defeito (Pausas recorrentes) -->
+      <!-- Horários de Pausa Padrão -->
       <div class="pt-4 border-t border-zinc-800 space-y-2">
         <h3 class="text-sm font-bold text-zinc-200">Horários Padrão em que NÃO Atende (Pausas/Folgas Fixas)</h3>
         <p class="text-xs text-zinc-400">Clique nos horários abaixo para fechá-los por defeito em todos os dias (ex: horário de almoço ou descanso).</p>
@@ -241,6 +241,16 @@
       } catch (err) { console.error("Erro ao carregar dados:", err); }
     }
 
+    async function salvarConfiguracoesSilencioso() {
+      try {
+        await fetch(`${API_URL}/api/configurar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dadosServidor)
+        });
+      } catch (err) { console.error("Erro de conexão.", err); }
+    }
+
     async function salvarConfiguracoesServidor(mensagemSucesso = "Configurações salvas com sucesso!") {
       const nomeBarbearia = document.getElementById('input-nome-barbearia').value.trim();
       const whats = document.getElementById('input-whats-yukio').value.trim();
@@ -311,20 +321,23 @@
           </span>
         `;
 
+        // CLICAR NO HORÁRIO ABRE A PERGUNTA DO CLIENTE OU DESBLOQUEIA
         div.onclick = async () => {
           if (!dadosServidor.horariosBloqueadosPorData[dataSel]) {
             dadosServidor.horariosBloqueadosPorData[dataSel] = [];
           }
 
           if (isBloqueado) {
+            // Se estiver bloqueado (Off), pergunta se quer desbloquear
             dadosServidor.horariosBloqueadosPorData[dataSel] = dadosServidor.horariosBloqueadosPorData[dataSel].filter(h => h !== hora);
             if (dadosServidor.agendamentos) {
               dadosServidor.agendamentos = dadosServidor.agendamentos.filter(ag => !(ag.data === dataSel && ag.horario === hora));
             }
-            await salvarConfiguracoesServidor("Horário desbloqueado!");
+            await salvarConfiguracoesSilencioso();
           } else {
+            // Se estiver livre (On), pede o nome e o telemóvel para registar a reserva manual
             const nomeCliente = prompt(`Nome do cliente para o horário das ${hora} (${dataSel}):`);
-            if (!nomeCliente) return;
+            if (!nomeCliente) return; // Se cancelar, não faz nada
 
             const telCliente = prompt(`Número de WhatsApp/Telemóvel do cliente (${nomeCliente}):`) || "Não informado";
 
@@ -340,7 +353,7 @@
               whatsapp: telCliente
             });
 
-            await salvarConfiguracoesServidor("Agendamento manual com contacto guardado!");
+            await salvarConfiguracoesSilencioso();
           }
           renderizarHorariosBloqueioAdmin();
           renderizarListaAgendamentos();
@@ -370,7 +383,7 @@
           } else {
             dadosServidor.horariosPausaPadrao.push(hora);
           }
-          await salvarConfiguracoesServidor("Horário de pausa padrão atualizado!");
+          await salvarConfiguracoesSilencioso();
           renderizarHorariosPausaPadrao();
         };
         grid.appendChild(btn);
@@ -382,7 +395,7 @@
       if (dadosServidor.horariosBloqueadosPorData) {
         delete dadosServidor.horariosBloqueadosPorData[dataSel];
       }
-      salvarConfiguracoesServidor("Dia totalmente liberado!").then(() => {
+      salvarConfiguracoesSilencioso().then(() => {
         renderizarHorariosBloqueioAdmin();
         renderizarListaAgendamentos();
       });
@@ -413,7 +426,7 @@
 
     async function removerAgendamento(index) {
       dadosServidor.agendamentos.splice(index, 1);
-      await salvarConfiguracoesServidor("Agendamento removido da lista!");
+      await salvarConfiguracoesSilencioso();
       renderizarListaAgendamentos();
     }
 
@@ -451,18 +464,18 @@
       document.getElementById('novo-servico-preco').value = '';
       document.getElementById('novo-servico-duracao').value = '';
       renderizarServicos();
-      await salvarConfiguracoesServidor("Serviço adicionado!");
+      await salvarConfiguracoesSilencioso();
     }
 
     async function atualizarServico(index, campo, valor) {
       dadosServidor.servicos[index][campo] = (campo === 'preco' || campo === 'duracao') ? Number(valor) : valor;
-      await salvarConfiguracoesServidor("Serviço atualizado!");
+      await salvarConfiguracoesSilencioso();
     }
 
     async function removerServico(index) {
       dadosServidor.servicos.splice(index, 1);
       renderizarServicos();
-      await salvarConfiguracoesServidor("Serviço removido!");
+      await salvarConfiguracoesSilencioso();
     }
 
     function renderizarDias() {
@@ -489,7 +502,7 @@
         dadosServidor.diasFechados.push(idDia);
       }
       renderizarDias();
-      await salvarConfiguracoesServidor("Dias atualizados!");
+      await salvarConfiguracoesSilencioso();
     }
 
     function renderizarTudo() {
