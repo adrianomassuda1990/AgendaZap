@@ -6,6 +6,38 @@
   <title>Agendamento Online</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase SDKs via CDN (Ligados à nuvem de Tóquio - site-danilo-config) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0lLW90e0p-bGgVvcuK6yqSHqdGE4gKhc",
+      authDomain: "site-danilo-config.firebaseapp.com",
+      projectId: "site-danilo-config",
+      storageBucket: "site-danilo-config.firebasestorage.app",
+      messagingSenderId: "109226079646",
+      appId: "1:109226079646:web:256beb9a3d91afda33928f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Expõe as funções do Firestore para o escopo global do script da página
+    window.dbFirestore = db;
+    window.fsDoc = doc;
+    window.fsSetDoc = setDoc;
+    window.fsGetDoc = getDoc;
+    window.fsCollection = collection;
+    window.fsAddDoc = addDoc;
+    window.fsGetDocs = getDocs;
+
+    // Dispara o carregamento dos dados da barbearia assim que o Firebase carregar
+    if (typeof carregarDadosFirebase === 'function') {
+      carregarDadosFirebase();
+    }
+  </script>
 </head>
 <body class="bg-zinc-950 min-h-screen flex justify-center p-0 sm:p-4 text-zinc-100">
 
@@ -114,14 +146,25 @@
   </div>
 
   <script>
-    const API_URL = "https://agendazap-ozrf.onrender.com";
     lucide.createIcons();
 
     let currentStep = 1;
     let horarioEscolhido = "";
     let horariosOcupadosPeloServico = [];
     let servicoEscolhido = null;
-    let dadosBackend = { servicos: [], horariosBloqueadosPorData: {}, horariosPausaPadrao: [], diasFechados: [], whatsYukio: "", instagramYukio: "", telegramYukio: "" };
+    let dadosBackend = { 
+      servicos: [
+        { id: 'corte', nome: 'Corte de Cabelo', preco: 3000, duracao: 50 }
+      ], 
+      horariosBloqueadosPorData: {}, 
+      horariosPausaPadrao: [], 
+      diasFechados: [], 
+      whatsYukio: "", 
+      instagramYukio: "", 
+      telegramYukio: "",
+      nomeBarbearia: "Barbearia",
+      logoUrl: ""
+    };
 
     function minutosParaHora(minutosTotal) {
       const h = Math.floor(minutosTotal / 60);
@@ -134,11 +177,36 @@
     inputData.min = hojeStr;
     inputData.value = hojeStr;
 
-    async function buscarDadosBackend() {
+    // Função para buscar dados diretamente do Firestore do Firebase (substitui o Render)
+    async function carregarDadosFirebase() {
+      if (!window.dbFirestore) return;
       try {
-        const res = await fetch(`${API_URL}/api/dados`);
-        dadosBackend = await res.json();
+        const docRef = window.fsDoc(window.dbFirestore, "configuracoes", "danilo_site");
+        const docSnap = await window.fsGetDoc(docRef);
         
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data) {
+            dadosBackend = { ...dadosBackend, ...data };
+          }
+        }
+
+        // Carregar também agendamentos salvos para preencher os bloqueios do dia
+        const agendamentosRef = window.fsCollection(window.dbFirestore, "agendamentos");
+        const agendamentosSnap = await window.fsGetDocs(agendamentosRef);
+        let horariosBloqueadosPorDataTemp = dadosBackend.horariosBloqueadosPorData || {};
+        
+        agendamentosSnap.forEach((docItem) => {
+          const ag = docItem.data();
+          if (ag.data && ag.horariosOcupados) {
+            if (!horariosBloqueadosPorDataTemp[ag.data]) {
+              horariosBloqueadosPorDataTemp[ag.data] = [];
+            }
+            horariosBloqueadosPorDataTemp[ag.data] = [...new Set([...horariosBloqueadosPorDataTemp[ag.data], ...ag.horariosOcupados])];
+          }
+        });
+        dadosBackend.horariosBloqueadosPorData = horariosBloqueadosPorDataTemp;
+
         if (dadosBackend.nomeBarbearia) {
           document.getElementById('nome-barbearia-cliente').innerText = dadosBackend.nomeBarbearia;
           document.title = dadosBackend.nomeBarbearia + " - Agendamento";
@@ -149,7 +217,8 @@
 
         carregarServicosCliente();
       } catch (err) {
-        console.error("Erro ao carregar dados:", err);
+        console.error("Erro ao carregar dados do Firebase:", err);
+        carregarServicosCliente();
       }
     }
 
@@ -227,7 +296,6 @@
       const dataObj = new Date(partes[0], partes[1] - 1, partes[2]);
       const diaDaSemana = dataObj.getDay();
       
-      await buscarDadosBackend();
       const diasFechados = dadosBackend.diasFechados || [];
 
       if (diasFechados.includes(diaDaSemana)) {
@@ -338,22 +406,22 @@
 
         const dataFormatada = inputData.value.split('-').reverse().join('/');
 
-        try {
-          await fetch(`${API_URL}/api/agendar`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+        // Salva o agendamento diretamente no Firebase Firestore
+        if (window.dbFirestore) {
+          try {
+            await window.fsAddDoc(window.fsCollection(window.dbFirestore, "agendamentos"), {
               cliente: nome,
               servico: servicoEscolhido.nome,
               preco: servicoEscolhido.preco,
               data: inputData.value,
               horario: horarioEscolhido,
               whatsapp: whats,
-              horariosOcupados: horariosOcupadosPeloServico
-            })
-          });
-        } catch (e) {
-          console.error("Erro ao agendar:", e);
+              horariosOcupados: horariosOcupadosPeloServico,
+              criadoEm: new Date().toISOString()
+            });
+          } catch (e) {
+            console.error("Erro ao salvar agendamento no Firestore:", e);
+          }
         }
 
         const nomeBarbeariaTexto = dadosBackend.nomeBarbearia || "Barbearia";
@@ -366,7 +434,6 @@
           `📲 *Contato:* ${whats}\n\n` +
           `_Agendado via AgendaZap_`;
 
-        // COPIA AUTOMATICAMENTE PARA A MEMÓRIA DO TELEMÓVEL
         navigator.clipboard.writeText(textoMensagem).catch(err => console.log(err));
 
         document.getElementById('step-3').classList.add('hidden');
@@ -413,8 +480,6 @@
       }
       lucide.createIcons();
     }
-
-    buscarDadosBackend();
   </script>
 </body>
 </html>
