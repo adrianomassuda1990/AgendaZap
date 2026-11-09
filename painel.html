@@ -6,6 +6,38 @@
   <title>Painel Administrativo - Barbearia</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase SDKs via CDN (Ligados à nuvem de Tóquio - site-danilo-config) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0lLW90e0p-bGgVvcuK6yqSHqdGE4gKhc",
+      authDomain: "site-danilo-config.firebaseapp.com",
+      projectId: "site-danilo-config",
+      storageBucket: "site-danilo-config.firebasestorage.app",
+      messagingSenderId: "109226079646",
+      appId: "1:109226079646:web:256beb9a3d91afda33928f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Expõe as funções do Firestore para o escopo global do script da página
+    window.dbFirestore = db;
+    window.fsDoc = doc;
+    window.fsSetDoc = setDoc;
+    window.fsGetDoc = getDoc;
+    window.fsCollection = collection;
+    window.fsAddDoc = addDoc;
+    window.fsGetDocs = getDocs;
+
+    // Assim que carregar o Firebase, tenta carregar os dados
+    if (typeof carregarDadosServidor === 'function') {
+      carregarDadosServidor();
+    }
+  </script>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen p-4 sm:p-8 flex justify-center items-start">
 
@@ -33,7 +65,7 @@
           <h1 id="titulo-topo-admin" class="text-2xl font-bold text-zinc-100 uppercase tracking-tight">Barbearia</h1>
           <span class="bg-amber-500/10 text-amber-500 border border-amber-500/30 text-xs px-2.5 py-1 rounded-full font-bold">Gestão</span>
         </div>
-        <p class="text-xs text-zinc-400 mt-1">Painel de Controlo Completo</p>
+        <p class="text-xs text-zinc-400 mt-1">Painel de Controlo Completo (Firebase Nuvem)</p>
       </div>
       <button onclick="sair()" class="text-xs text-zinc-400 hover:text-red-400 flex items-center gap-1 transition-all">
         <i data-lucide="log-out" class="w-4 h-4"></i> Sair
@@ -181,7 +213,6 @@
   </div>
 
   <script>
-    const API_URL = "https://agendazap-ozrf.onrender.com";
     lucide.createIcons();
 
     let dadosServidor = {
@@ -191,7 +222,9 @@
       whatsYukio: "",
       instagramYukio: "",
       telegramYukio: "",
-      servicos: [],
+      servicos: [
+        { id: 'corte', nome: 'Corte de Cabelo', preco: 3000, duracao: 50 }
+      ],
       diasFechados: [],
       horariosPausaPadrao: [],
       horariosBloqueadosPorData: {},
@@ -218,15 +251,32 @@
     document.getElementById('manual-data').value = hojeIso;
     document.getElementById('filtro-data-agenda').value = hojeIso;
 
+    // Carrega configurações e agendamentos diretamente do Firestore
     async function carregarDadosServidor() {
+      if (!window.dbFirestore) return;
       try {
-        const res = await fetch(`${API_URL}/api/dados`);
-        const data = await res.json();
-        if (data) {
-          dadosServidor = { ...dadosServidor, ...data };
+        const docRef = window.fsDoc(window.dbFirestore, "configuracoes", "danilo_site");
+        const docSnap = await window.fsGetDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data) {
+            dadosServidor = { ...dadosServidor, ...data };
+          }
         }
+
+        // Carrega também todos os agendamentos salvos na nuvem
+        const agendamentosRef = window.fsCollection(window.dbFirestore, "agendamentos");
+        const agendamentosSnap = await window.fsGetDocs(agendamentosRef);
+        let listaAgendamentos = [];
+        
+        agendamentosSnap.forEach((docItem) => {
+          listaAgendamentos.push(docItem.data());
+        });
+        dadosServidor.agendamentos = listaAgendamentos;
+
       } catch (err) {
-        console.error("Erro ao carregar dados:", err);
+        console.error("Erro ao carregar dados do Firebase:", err);
       }
     }
 
@@ -244,6 +294,7 @@
       }
     }
 
+    // Salva configurações diretamente no Firestore
     async function salvarConfiguracoesServidor(mensagemSucesso = "Configurações salvas!") {
       dadosServidor.nomeBarbearia = document.getElementById('input-nome-barbearia').value.trim() || "Barbearia";
       dadosServidor.whatsYukio = document.getElementById('input-whats-yukio').value.trim();
@@ -252,24 +303,32 @@
       const novaSenha = document.getElementById('input-nova-senha').value.trim();
       if (novaSenha) dadosServidor.senhaYukio = novaSenha;
 
+      if (!window.dbFirestore) {
+        alert("Erro: Firebase não inicializado.");
+        return;
+      }
+
       try {
-        const res = await fetch(`${API_URL}/api/configurar`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dadosServidor)
+        await window.fsSetDoc(window.fsDoc(window.dbFirestore, "configuracoes", "danilo_site"), {
+          nomeBarbearia: dadosServidor.nomeBarbearia,
+          logoUrl: dadosServidor.logoUrl,
+          senhaYukio: dadosServidor.senhaYukio,
+          whatsYukio: dadosServidor.whatsYukio,
+          instagramYukio: dadosServidor.instagramYukio,
+          telegramYukio: dadosServidor.telegramYukio || "",
+          servicos: dadosServidor.servicos,
+          diasFechados: dadosServidor.diasFechados,
+          horariosPausaPadrao: dadosServidor.horariosPausaPadrao,
+          horariosBloqueadosPorData: dadosServidor.horariosBloqueadosPorData || {}
         });
 
-        if (res.ok) {
-          if (novaSenha) document.getElementById('input-nova-senha').value = '';
-          alert(mensagemSucesso);
-          await carregarDadosServidor();
-          renderizarTudo();
-        } else {
-          alert("Erro ao salvar no servidor.");
-        }
+        if (novaSenha) document.getElementById('input-nova-senha').value = '';
+        alert(mensagemSucesso);
+        await carregarDadosServidor();
+        renderizarTudo();
       } catch (err) {
         console.error(err);
-        alert("Erro de conexão.");
+        alert("Erro ao salvar no Firestore.");
       }
     }
 
@@ -484,33 +543,31 @@
         }
       }
 
+      if (!window.dbFirestore) {
+        alert("Erro: Firebase não inicializado.");
+        return;
+      }
+
       try {
-        const res = await fetch(`${API_URL}/api/agendar`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            cliente: nome,
-            servico: servicoObj.nome,
-            preco: servicoObj.preco,
-            data: data,
-            horario: horarioInicio,
-            whatsapp: whats,
-            horariosOcupados: horariosOcupados
-          })
+        await window.fsAddDoc(window.fsCollection(window.dbFirestore, "agendamentos"), {
+          cliente: nome,
+          servico: servicoObj.nome,
+          preco: servicoObj.preco,
+          data: data,
+          horario: horarioInicio,
+          whatsapp: whats,
+          horariosOcupados: horariosOcupados,
+          criadoEm: new Date().toISOString()
         });
 
-        if (res.ok) {
-          alert(`Agendamento de ${nome} criado com sucesso!`);
-          document.getElementById('manual-nome').value = '';
-          document.getElementById('manual-whats').value = '';
-          await carregarDadosServidor();
-          renderizarAgendaDoDia();
-        } else {
-          alert("Erro ao criar agendamento.");
-        }
+        alert(`Agendamento de ${nome} criado com sucesso!`);
+        document.getElementById('manual-nome').value = '';
+        document.getElementById('manual-whats').value = '';
+        await carregarDadosServidor();
+        renderizarAgendaDoDia();
       } catch (err) {
         console.error(err);
-        alert("Erro de conexão.");
+        alert("Erro ao criar agendamento no Firestore.");
       }
     }
 
