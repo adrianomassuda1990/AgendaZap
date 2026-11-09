@@ -366,12 +366,11 @@
         document.execCommand('copy');
         alert("📋 Mensagem copiada com sucesso!");
       } catch (err) {
-        alert("Não foi possível copiar automaticamente. Seleciona o texto manualmente.");
+        alert("Não foi possível copiar automaticamente.");
       }
       document.body.removeChild(textarea);
     }
 
-    // FUNÇÃO ROBUSTA PARA COPIAR A LISTA COMPLETA DO DIA
     function copiarResumoDiaParaTodos() {
       const dataFiltro = document.getElementById('filtro-data-agenda').value;
       const agendamentos = dadosServidor.agendamentos || [];
@@ -541,7 +540,7 @@
       await salvarConfiguracoesServidor("Dias atualizados!");
     }
 
-    funcion renderizarHorariosPausaPadrao() {
+    function renderizarHorariosPausaPadrao() {
       const grid = document.getElementById('grid-horarios-pausa-padrao');
       grid.innerHTML = '';
       if (!dadosServidor.horariosPausaPadrao) dadosServidor.horariosPausaPadrao = [];
