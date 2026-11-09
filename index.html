@@ -42,7 +42,7 @@
         </div>
       </div>
 
-      <!-- PASSO 2: Horários Interativos Sequenciais -->
+      <!-- PASSO 2: Horários Sequenciais -->
       <div id="step-2" class="p-5 space-y-5 hidden">
         <div>
           <label class="block text-xs font-bold uppercase text-zinc-400 mb-2">Selecione a Data</label>
@@ -77,15 +77,21 @@
         </div>
       </div>
 
-      <!-- PASSO 4: Redirecionamento Direto -->
+      <!-- PASSO 4: Aviso e Redirecionamento Automático com Cópia -->
       <div id="step-4" class="p-6 text-center space-y-4 hidden my-auto">
         <div class="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto border border-emerald-500/40 shadow-xl">
           <i data-lucide="check-circle-2" class="w-10 h-10"></i>
         </div>
-        <div class="space-y-1">
+        <div class="space-y-2">
           <h2 class="text-xl font-bold text-zinc-100">Agendamento Registado!</h2>
-          <p class="text-xs text-zinc-400 px-2" id="texto-redirecionamento">A redirecionar automaticamente para o canal do barbeiro...</p>
+          <div class="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-400 space-y-1">
+            <p class="font-bold">📋 Mensagem copiada automaticamente!</p>
+            <p id="aviso-instrucao-canal">A abrir o canal do barbeiro... Basta colar (segurar o dedo e colar) no chat para enviar.</p>
+          </div>
         </div>
+        
+        <div id="container-botoes-manuais" class="space-y-2 pt-2"></div>
+
         <button onclick="location.reload()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs rounded-xl transition-all mt-3">
           Fazer Novo Agendamento
         </button>
@@ -117,17 +123,10 @@
     let servicoEscolhido = null;
     let dadosBackend = { servicos: [], horariosBloqueadosPorData: {}, horariosPausaPadrao: [], diasFechados: [], whatsYukio: "", instagramYukio: "", telegramYukio: "" };
 
-    // Converte minutos para formato hora (ex: 480 min -> "08:00")
     function minutosParaHora(minutosTotal) {
       const h = Math.floor(minutosTotal / 60);
       const m = minutosTotal % 60;
       return `${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}`;
-    }
-
-    // Converte "08:00" para minutos totais desde a meia-noite
-    function horaParaMinutos(horaStr) {
-      const partes = horaStr.split(':');
-      return parseInt(partes[0]) * 60 + parseInt(partes[1]);
     }
 
     const inputData = document.getElementById('data-agendamento');
@@ -245,7 +244,7 @@
       }
 
       const duracaoServico = servicoEscolhido ? (servicoEscolhido.duracao || 30) : 30;
-      document.getElementById('info-duracao-servico').innerText = `Duração exata: ${duracaoServico} minutos (O próximo começa após o término)`;
+      document.getElementById('info-duracao-servico').innerText = `Duração exata: ${duracaoServico} min (Próximo começa após o término)`;
 
       const bloqueadosPorData = dadosBackend.horariosBloqueadosPorData || {};
       const bloqueadosDoDia = bloqueadosPorData[dataSel] || [];
@@ -255,23 +254,18 @@
       grid.innerHTML = '';
       horarioEscolhido = "";
 
-      // Geração Sequencial Interativa (Ex: 08:00 -> 08:50 -> 09:40 para 50 min)
-      let inicioMin = 7 * 60; // Abre às 07:00
-      const fimMin = 23 * 60; // Fecha às 23:00
-
+      let inicioMin = 7 * 60;
+      const fimMin = 23 * 60;
       let horariosGerados = [];
+
       while (inicioMin + duracaoServico <= fimMin) {
         const horaInicioStr = minutosParaHora(inicioMin);
-        
-        // Calcula todos os minutos/blocos de 30 min que este atendimento vai ocupar para checar conflitos
         let indisponivel = false;
         let horariosAfetadosTemp = [];
         
-        // Verifica conflitos com base em blocos de 30 min cobertos por este intervalo
         let mCheck = inicioMin;
         while (mCheck < inicioMin + duracaoServico) {
-          const slotStr = minutosParaHora(Math.floor(mCheck / 30) * 30); // Arredonda para o bloco base
-          // Verifica se bate com pausa padrão ou bloqueio específico
+          const slotStr = minutosParaHora(Math.floor(mCheck / 30) * 30);
           if (pausasPadrao.includes(slotStr) || bloqueadosDoDia.includes(slotStr) || bloqueadosDoDia.includes(minutosParaHora(mCheck))) {
             indisponivel = true;
             break;
@@ -280,13 +274,7 @@
           mCheck += 30;
         }
 
-        horariosGerados.push({
-          hora: horaInicioStr,
-          indisponivel: indisponivel,
-          afetados: horariosAfetadosTemp
-        });
-
-        // O próximo horário disponível começa exatamente quando este termina!
+        horariosGerados.push({ hora: horaInicioStr, indisponivel: indisponivel, afetados: horariosAfetadosTemp });
         inicioMin += duracaoServico; 
       }
 
@@ -378,36 +366,49 @@
           `📲 *Contato:* ${whats}\n\n` +
           `_Agendado via AgendaZap_`;
 
+        // COPIA AUTOMATICAMENTE PARA A MEMÓRIA DO TELEMÓVEL
+        navigator.clipboard.writeText(textoMensagem).catch(err => console.log(err));
+
         document.getElementById('step-3').classList.add('hidden');
         document.getElementById('steps-indicator-wrapper').classList.add('hidden');
         document.getElementById('footer-actions').classList.add('hidden');
         document.getElementById('step-4').classList.remove('hidden');
 
-        // REDIRECIONAMENTO AUTOMÁTICO PARA O CANAL CONFIGURADO PELO BARBEIRO
-        let linkRedirecionamento = "";
+        const containerBotoes = document.getElementById('container-botoes-manuais');
+        containerBotoes.innerHTML = '';
+
+        let linkCanal = "";
         let nomeCanal = "";
+        let corBotao = "";
 
         if (dadosBackend.whatsYukio && dadosBackend.whatsYukio.trim() !== "") {
           let numeroFinal = formatarNumeroJapao(dadosBackend.whatsYukio);
-          linkRedirecionamento = `https://api.whatsapp.com/send?phone=${numeroFinal}&text=${encodeURIComponent(textoMensagem)}`;
+          linkCanal = `https://api.whatsapp.com/send?phone=${numeroFinal}&text=${encodeURIComponent(textoMensagem)}`;
           nomeCanal = "WhatsApp";
+          corBotao = "bg-emerald-600 hover:bg-emerald-500";
         } else if (dadosBackend.instagramYukio && dadosBackend.instagramYukio.trim() !== "") {
           let userIg = dadosBackend.instagramYukio.replace('@', '').trim();
-          linkRedirecionamento = `https://instagram.com/${userIg}`;
+          linkCanal = `https://instagram.com/${userIg}`;
           nomeCanal = "Instagram Direct";
+          corBotao = "bg-gradient-to-r from-purple-600 to-pink-600";
         } else if (dadosBackend.telegramYukio && dadosBackend.telegramYukio.trim() !== "") {
           let userTg = dadosBackend.telegramYukio.replace('@', '').trim();
-          linkRedirecionamento = `https://t.me/${userTg}?text=${encodeURIComponent(textoMensagem)}`;
+          linkCanal = `https://t.me/${userTg}?text=${encodeURIComponent(textoMensagem)}`;
           nomeCanal = "Telegram";
+          corBotao = "bg-sky-600 hover:bg-sky-500";
         }
 
-        if (linkRedirecionamento) {
-          document.getElementById('texto-redirecionamento').innerText = `A abrir o ${nomeCanal} do barbeiro para enviar a confirmação...`;
-          setTimeout(() => {
-            window.location.href = linkRedirecionamento;
-          }, 1500); // Redireciona automaticamente após 1.5 segundos
+        if (linkCanal) {
+          document.getElementById('aviso-instrucao-canal').innerText = `Mensagem copiada! A abrir o ${nomeCanal}. Basta colar no chat para enviar ao barbeiro.`;
+          
+          let btnAbrir = document.createElement('a');
+          btnAbrir.href = linkCanal;
+          btnAbrir.target = "_blank";
+          btnAbrir.className = `w-full py-3.5 ${corBotao} text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg`;
+          btnAbrir.innerHTML = `<i data-lucide="external-link" class="w-4 h-4"></i> Abrir ${nomeCanal} do Barbeiro`;
+          containerBotoes.appendChild(btnAbrir);
         } else {
-          document.getElementById('texto-redirecionamento').innerText = "Agendamento concluído com sucesso!";
+          document.getElementById('aviso-instrucao-canal').innerText = "Mensagem copiada para a memória! Podes colá-la onde quiseres.";
         }
       }
       lucide.createIcons();
