@@ -241,7 +241,10 @@
       try {
         const res = await fetch(`${API_URL}/api/dados`);
         const data = await res.json();
-        if (data) { dadosServidor = { ...dadosServidor, ...data }; }
+        if (data) { 
+          // Atualiza fundindo corretamente com os dados do servidor para nunca perder propriedades
+          dadosServidor = { ...dadosServidor, ...data }; 
+        }
       } catch (err) { console.error("Erro ao carregar dados:", err); }
     }
 
@@ -265,7 +268,7 @@
 
         if (res.ok) {
           const dataRes = await res.json();
-          if (dataRes.banco) dadosServidor = dataRes.banco;
+          if (dataRes.banco) dadosServidor = { ...dadosServidor, ...dataRes.banco };
           if (novaSenha) document.getElementById('input-nova-senha').value = '';
           alert(mensagemSucesso);
           renderizarTudo();
@@ -352,11 +355,15 @@
             renderizarHorariosBloqueioAdmin();
             renderizarListaAgendamentos();
 
-            await fetch(`${API_URL}/api/configurar`, {
+            const res = await fetch(`${API_URL}/api/configurar`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(dadosServidor)
             });
+            if (res.ok) {
+              const dataRes = await res.json();
+              if (dataRes.banco) dadosServidor = { ...dadosServidor, ...dataRes.banco };
+            }
           } catch (err) {
             console.error("Erro ao atualizar bloqueio:", err);
           }
@@ -366,7 +373,7 @@
       });
     }
 
-    // PAUSAS FIXAS COM ATUALIZAÇÃO IMEDIATA E ENVIO EM SEGUNDO PLANO
+    // PAUSAS FIXAS COM PERSISTÊNCIA E SINCRONIZAÇÃO SEGURA
     function renderizarHorariosPausaPadrao() {
       const grid = document.getElementById('grid-horarios-pausa-padrao');
       grid.innerHTML = '';
@@ -396,12 +403,20 @@
             // Atualiza o visual de imediato
             renderizarHorariosPausaPadrao();
 
-            // Envia para o servidor em segundo plano
-            await fetch(`${API_URL}/api/configurar`, {
+            // Envia para o servidor e atualiza o estado oficial
+            const res = await fetch(`${API_URL}/api/configurar`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(dadosServidor)
             });
+
+            if (res.ok) {
+              const dataRes = await res.json();
+              if (dataRes.banco) {
+                dadosServidor = { ...dadosServidor, ...dataRes.banco };
+              }
+              renderizarHorariosPausaPadrao();
+            }
           } catch (err) {
             console.error("Erro ao atualizar pausa:", err);
           }
@@ -422,6 +437,11 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dadosServidor)
+      }).then(async res => {
+        if (res.ok) {
+          const dataRes = await res.json();
+          if (dataRes.banco) dadosServidor = { ...dadosServidor, ...dataRes.banco };
+        }
       });
     }
 
@@ -451,11 +471,15 @@
     async function removerAgendamento(index) {
       dadosServidor.agendamentos.splice(index, 1);
       renderizarListaAgendamentos();
-      await fetch(`${API_URL}/api/configurar`, {
+      const res = await fetch(`${API_URL}/api/configurar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dadosServidor)
       });
+      if (res.ok) {
+        const dataRes = await res.json();
+        if (dataRes.banco) dadosServidor = { ...dadosServidor, ...dataRes.banco };
+      }
     }
 
     function renderizarServicos() {
@@ -493,21 +517,33 @@
       document.getElementById('novo-servico-duracao').value = '';
       renderizarServicos();
       
-      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      const res = await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      if (res.ok) {
+        const dataRes = await res.json();
+        if (dataRes.banco) dadosServidor = { ...dadosServidor, ...dataRes.banco };
+      }
     }
 
     async function atualizarServico(index, campo, valor) {
       dadosServidor.servicos[index][campo] = (campo === 'preco' || campo === 'duracao') ? Number(valor) : valor;
-      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      const res = await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      if (res.ok) {
+        const dataRes = await res.json();
+        if (dataRes.banco) dadosServidor = { ...dadosServidor, ...dataRes.banco };
+      }
     }
 
     async function removerServico(index) {
       dadosServidor.servicos.splice(index, 1);
       renderizarServicos();
-      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      const res = await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
+      if (res.ok) {
+        const dataRes = await res.json();
+        if (dataRes.banco) dadosServidor = { ...dadosServidor, ...dataRes.banco };
+      }
     }
 
-    // DIAS DA SEMANA COM ATUALIZAÇÃO IMEDIATA
+    // DIAS DA SEMANA COM ATUALIZAÇÃO IMEDIATA E PERSISTÊNCIA
     function renderizarDias() {
       const container = document.getElementById('grid-dias-semana');
       container.innerHTML = '';
@@ -527,11 +563,16 @@
 
             renderizarDias();
 
-            await fetch(`${API_URL}/api/configurar`, {
+            const res = await fetch(`${API_URL}/api/configurar`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(dadosServidor)
             });
+            if (res.ok) {
+              const dataRes = await res.json();
+              if (dataRes.banco) dadosServidor = { ...dadosServidor, ...dataRes.banco };
+              renderizarDias();
+            }
           } catch (err) {
             console.error("Erro ao atualizar dia:", err);
           }
