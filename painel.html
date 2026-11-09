@@ -40,7 +40,7 @@
       </button>
     </div>
 
-    <!-- 1. IDENTIDADE VISUAL & LOGÓTIPO DO TELEMÓVEL -->
+    <!-- 1. IDENTIDADE VISUAL & LOGÓTIPO -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
       <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-3">
         <i data-lucide="image" class="w-5 h-5 text-amber-500"></i> Nome & Logótipo
@@ -55,7 +55,6 @@
           <input type="file" id="input-arquivo-logo" accept="image/*" onchange="converterLogoParaBase64(this)" class="w-full p-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-400 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-zinc-950 hover:file:bg-amber-600">
         </div>
       </div>
-      <!-- Pré-visualização do Logo -->
       <div id="preview-logo-container" class="hidden items-center gap-3 pt-2">
         <span class="text-xs text-zinc-400">Logótipo carregado:</span>
         <img id="preview-logo-img" src="" class="w-12 h-12 rounded-full object-cover border border-amber-500/50">
@@ -89,13 +88,19 @@
       </button>
     </div>
 
-    <!-- 3. AGENDA DO DIA & MENSAGENS AUTOMÁTICAS (WhatsApp / Instagram / Telegram) -->
+    <!-- 3. AGENDA DO DIA & ENVIO EM MASSA -->
     <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
-      <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-3">
-        <i data-lucide="message-square-code" class="w-5 h-5 text-amber-500"></i> Mensagens Automáticas para Clientes do Dia
-      </h2>
-      <div class="flex flex-col sm:flex-row gap-3 items-center bg-zinc-950 p-4 rounded-xl border border-zinc-800">
-        <div class="w-full sm:w-auto flex-1">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-800 pb-3">
+        <h2 class="text-base font-bold text-zinc-200 flex items-center gap-2">
+          <i data-lucide="calendar" class="w-5 h-5 text-amber-500"></i> Agenda & Lembretes para os Clientes do Dia
+        </h2>
+        <button onclick="copiarResumoDiaParaTodos()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition-all flex items-center gap-1.5 shadow-md">
+          <i data-lucide="share-2" class="w-4 h-4"></i> Copiar Lista Completa do Dia
+        </button>
+      </div>
+
+      <div class="flex items-center bg-zinc-950 p-4 rounded-xl border border-zinc-800">
+        <div class="w-full">
           <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Selecionar Data da Agenda</label>
           <input type="date" id="filtro-data-agenda" onchange="renderizarAgendaDoDia()" class="w-full p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-amber-500 font-bold focus:outline-none">
         </div>
@@ -331,7 +336,7 @@
                 <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp
               </a>` : ''}
             <button onclick="copiarMensagemLembrete('${ag.cliente}', '${ag.horario}', '${ag.servico}')" class="px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 justify-center flex-1 sm:flex-initial">
-              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar Msg (IG/Telegram)
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar Msg
             </button>
           </div>
         `;
@@ -343,7 +348,35 @@
     function copiarMensagemLembrete(cliente, horario, servico) {
       const texto = `Olá ${cliente}, tudo bem? Aqui é da ${dadosServidor.nomeBarbearia || 'Barbearia'}. Passando para lembrar do seu agendamento hoje às ${horario} (${servico}). Confirmado?`;
       navigator.clipboard.writeText(texto).then(() => {
-        alert("📋 Mensagem copiada com sucesso!\n\nPodes colá-la no chat do Instagram Direct ou Telegram do cliente.");
+        alert("📋 Mensagem copiada com sucesso para enviar ao cliente!");
+      });
+    }
+
+    // FUNÇÃO PARA COPIAR A LISTA COMPLETA DOS CLIENTES DO DIA DE UMA SÓ VEZ
+    function copiarResumoDiaParaTodos() {
+      const dataFiltro = document.getElementById('filtro-data-agenda').value;
+      const agendamentos = dadosServidor.agendamentos || [];
+      const doDia = agendamentos.filter(a => a.data === dataFiltro);
+
+      if (doDia.length === 0) {
+        alert("Não há agendamentos nesta data para copiar.");
+        return;
+      }
+
+      doDia.sort((a, b) => a.horario.localeCompare(b.horario));
+      const dataFormatada = dataFiltro.split('-').reverse().join('/');
+
+      let resumo = `📅 *AGENDA DE ATENDIMENTOS - ${dataFormatada}*\n`;
+      resumo += `💈 *${dadosServer.nomeBarbearia || 'Barbearia'}*\n\n`;
+
+      doDia.forEach((ag, idx) => {
+        resumo += `${idx + 1}. *${ag.horario}* - ${ag.cliente} (${ag.servico})\n`;
+      });
+
+      resumo += `\n_Gerado via AgendaZap_`;
+
+      navigator.clipboard.writeText(resumo).then(() => {
+        alert("📋 Resumo completo da agenda do dia copiado com sucesso!\n\nPodes colá-lo num grupo de equipa ou no chat do WhatsApp/Telegram para ver todos os horários de uma só vez.");
       });
     }
 
