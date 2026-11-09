@@ -159,7 +159,7 @@
       <!-- Horários de Pausa Padrão -->
       <div class="pt-4 border-t border-zinc-800 space-y-2">
         <h3 class="text-sm font-bold text-zinc-200">Horários Padrão em que NÃO Atende (Pausas/Folgas Fixas)</h3>
-        <p class="text-xs text-zinc-400">Verde = Disponível | Vermelho = Indisponível. Clica no horário e ele grava e altera a cor de imediato.</p>
+        <p class="text-xs text-zinc-400">Verde = Disponível | Vermelho = Indisponível. Clica no horário para alterar instantaneamente.</p>
         <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 bg-zinc-950 rounded-xl border border-zinc-800 max-h-48 overflow-y-auto" id="grid-horarios-pausa-padrao"></div>
       </div>
     </div>
@@ -320,44 +320,45 @@
         `;
 
         div.onclick = async () => {
-          if (!dadosServidor.horariosBloqueadosPorData[dataSel]) {
-            dadosServidor.horariosBloqueadosPorData[dataSel] = [];
-          }
-
-          if (isBloqueado) {
-            dadosServidor.horariosBloqueadosPorData[dataSel] = dadosServidor.horariosBloqueadosPorData[dataSel].filter(h => h !== hora);
-            if (dadosServidor.agendamentos) {
-              dadosServidor.agendamentos = dadosServidor.agendamentos.filter(ag => !(ag.data === dataSel && ag.horario === hora));
+          try {
+            if (!dadosServidor.horariosBloqueadosPorData[dataSel]) {
+              dadosServidor.horariosBloqueadosPorData[dataSel] = [];
             }
-          } else {
-            const nomeCliente = prompt(`Nome do cliente para o horário das ${hora} (${dataSel}):`);
-            if (!nomeCliente) return;
 
-            const telCliente = prompt(`Número de WhatsApp/Telemóvel do cliente (${nomeCliente}):`) || "Não informado";
+            if (isBloqueado) {
+              dadosServidor.horariosBloqueadosPorData[dataSel] = dadosServidor.horariosBloqueadosPorData[dataSel].filter(h => h !== hora);
+              if (dadosServidor.agendamentos) {
+                dadosServidor.agendamentos = dadosServidor.agendamentos.filter(ag => !(ag.data === dataSel && ag.horario === hora));
+              }
+            } else {
+              const nomeCliente = prompt(`Nome do cliente para o horário das ${hora} (${dataSel}):`);
+              if (!nomeCliente) return;
 
-            dadosServidor.horariosBloqueadosPorData[dataSel].push(hora);
+              const telCliente = prompt(`Número de WhatsApp/Telemóvel do cliente (${nomeCliente}):`) || "Não informado";
+
+              dadosServidor.horariosBloqueadosPorData[dataSel].push(hora);
+              
+              if (!dadosServidor.agendamentos) dadosServidor.agendamentos = [];
+              dadosServidor.agendamentos.push({
+                cliente: nomeCliente + " (Manual)",
+                servico: "Atendimento Presencial",
+                preco: 0,
+                data: dataSel,
+                horario: hora,
+                whatsapp: telCliente
+              });
+            }
             
-            if (!dadosServidor.agendamentos) dadosServidor.agendamentos = [];
-            dadosServidor.agendamentos.push({
-              cliente: nomeCliente + " (Manual)",
-              servico: "Atendimento Presencial",
-              preco: 0,
-              data: dataSel,
-              horario: hora,
-              whatsapp: telCliente
-            });
-          }
-          
-          const res = await fetch(`${API_URL}/api/configurar`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(dadosServidor)
-          });
-          if (res.ok) {
-            const dataRes = await res.json();
-            if (dataRes.banco) dadosServidor = dataRes.banco;
             renderizarHorariosBloqueioAdmin();
             renderizarListaAgendamentos();
+
+            await fetch(`${API_URL}/api/configurar`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(dadosServidor)
+            });
+          } catch (err) {
+            console.error("Erro ao atualizar bloqueio:", err);
           }
         };
 
@@ -365,7 +366,7 @@
       });
     }
 
-    // PAUSAS FIXAS COM GRAVAÇÃO INSTANTÂNEA AO CLICAR
+    // PAUSAS FIXAS COM ATUALIZAÇÃO IMEDIATA E ENVIO EM SEGUNDO PLANO
     function renderizarHorariosPausaPadrao() {
       const grid = document.getElementById('grid-horarios-pausa-padrao');
       grid.innerHTML = '';
@@ -383,25 +384,26 @@
         btn.innerHTML = `<span>${hora}</span><span class="text-[10px] px-1.5 py-0.2 rounded font-bold ${isPausa ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}">${isPausa ? 'Indisponível' : 'Disponível'}</span>`;
 
         btn.onclick = async () => {
-          if (!dadosServidor.horariosPausaPadrao) dadosServidor.horariosPausaPadrao = [];
+          try {
+            if (!dadosServidor.horariosPausaPadrao) dadosServidor.horariosPausaPadrao = [];
 
-          if (dadosServidor.horariosPausaPadrao.includes(hora)) {
-            dadosServidor.horariosPausaPadrao = dadosServidor.horariosPausaPadrao.filter(h => h !== hora);
-          } else {
-            dadosServidor.horariosPausaPadrao.push(hora);
-          }
+            if (dadosServidor.horariosPausaPadrao.includes(hora)) {
+              dadosServidor.horariosPausaPadrao = dadosServidor.horariosPausaPadrao.filter(h => h !== hora);
+            } else {
+              dadosServidor.horariosPausaPadrao.push(hora);
+            }
 
-          // GRAVA IMEDIATAMENTE NO SERVIDOR AO CLICAR
-          const res = await fetch(`${API_URL}/api/configurar`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(dadosServidor)
-          });
-
-          if (res.ok) {
-            const dataRes = await res.json();
-            if (dataRes.banco) dadosServidor = dataRes.banco;
+            // Atualiza o visual de imediato
             renderizarHorariosPausaPadrao();
+
+            // Envia para o servidor em segundo plano
+            await fetch(`${API_URL}/api/configurar`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(dadosServidor)
+            });
+          } catch (err) {
+            console.error("Erro ao atualizar pausa:", err);
           }
         };
         grid.appendChild(btn);
@@ -413,17 +415,13 @@
       if (dadosServidor.horariosBloqueadosPorData) {
         delete dadosServidor.horariosBloqueadosPorData[dataSel];
       }
+      renderizarHorariosBloqueioAdmin();
+      renderizarListaAgendamentos();
+
       fetch(`${API_URL}/api/configurar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dadosServidor)
-      }).then(async (res) => {
-        if (res.ok) {
-          const dataRes = await res.json();
-          if (dataRes.banco) dadosServidor = dataRes.banco;
-          renderizarHorariosBloqueioAdmin();
-          renderizarListaAgendamentos();
-        }
       });
     }
 
@@ -452,16 +450,12 @@
 
     async function removerAgendamento(index) {
       dadosServidor.agendamentos.splice(index, 1);
-      const res = await fetch(`${API_URL}/api/configurar`, {
+      renderizarListaAgendamentos();
+      await fetch(`${API_URL}/api/configurar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dadosServidor)
       });
-      if (res.ok) {
-        const dataRes = await res.json();
-        if (dataRes.banco) dadosServidor = dataRes.banco;
-        renderizarListaAgendamentos();
-      }
     }
 
     function renderizarServicos() {
@@ -497,35 +491,23 @@
       document.getElementById('novo-servico-nome').value = '';
       document.getElementById('novo-servico-preco').value = '';
       document.getElementById('novo-servico-duracao').value = '';
+      renderizarServicos();
       
-      const res = await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
-      if (res.ok) {
-        const dataRes = await res.json();
-        if (dataRes.banco) dadosServidor = dataRes.banco;
-        renderizarServicos();
-      }
+      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
     }
 
     async function atualizarServico(index, campo, valor) {
       dadosServidor.servicos[index][campo] = (campo === 'preco' || campo === 'duracao') ? Number(valor) : valor;
-      const res = await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
-      if (res.ok) {
-        const dataRes = await res.json();
-        if (dataRes.banco) dadosServidor = dataRes.banco;
-      }
+      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
     }
 
     async function removerServico(index) {
       dadosServidor.servicos.splice(index, 1);
-      const res = await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
-      if (res.ok) {
-        const dataRes = await res.json();
-        if (dataRes.banco) dadosServidor = dataRes.banco;
-        renderizarServicos();
-      }
+      renderizarServicos();
+      await fetch(`${API_URL}/api/configurar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dadosServidor) });
     }
 
-    // DIAS DA SEMANA COM GRAVAÇÃO INSTANTÂNEA AO CLICAR
+    // DIAS DA SEMANA COM ATUALIZAÇÃO IMEDIATA
     function renderizarDias() {
       const container = document.getElementById('grid-dias-semana');
       container.innerHTML = '';
@@ -535,22 +517,23 @@
         btn.type = 'button';
         
         btn.onclick = async () => {
-          if (!dadosServidor.diasFechados) dadosServidor.diasFechados = [];
-          if (dadosServidor.diasFechados.includes(dia.id)) {
-            dadosServidor.diasFechados = dadosServidor.diasFechados.filter(d => d !== dia.id);
-          } else {
-            dadosServidor.diasFechados.push(dia.id);
-          }
+          try {
+            if (!dadosServidor.diasFechados) dadosServidor.diasFechados = [];
+            if (dadosServidor.diasFechados.includes(dia.id)) {
+              dadosServidor.diasFechados = dadosServidor.diasFechados.filter(d => d !== dia.id);
+            } else {
+              dadosServidor.diasFechados.push(dia.id);
+            }
 
-          const res = await fetch(`${API_URL}/api/configurar`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(dadosServidor)
-          });
-          if (res.ok) {
-            const dataRes = await res.json();
-            if (dataRes.banco) dadosServidor = dataRes.banco;
             renderizarDias();
+
+            await fetch(`${API_URL}/api/configurar`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(dadosServidor)
+            });
+          } catch (err) {
+            console.error("Erro ao atualizar dia:", err);
           }
         };
 
