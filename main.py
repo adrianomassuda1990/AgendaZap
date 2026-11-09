@@ -15,7 +15,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# FUNÇÕES PARA GERIR O SQLITE (agendazap.db)
 def inicializar_bd():
     conn = sqlite3.connect("agendazap.db")
     cursor = conn.cursor()
@@ -84,7 +83,7 @@ class Configuracao(BaseModel):
     senhaYukio: Optional[str] = None
     servicos: Optional[List[dict]] = None
     diasFechados: Optional[List[int]] = None
-    horariosPausaPadrao: Optional[List[str]] = None
+    horariosPausaPadrao: Optional[List[str]] = None  # <--- ESSENCIAL PARA GUARDAR AS PAUSAS
     horariosBloqueadosPorData: Optional[Dict[str, List[str]]] = None
     agendamentos: Optional[List[dict]] = None
 
@@ -130,7 +129,7 @@ def atualizar_configuracao(config: Configuracao):
         db["servicos"] = config.servicos
     if config.diasFechados is not None:
         db["diasFechados"] = config.diasFechados
-    if config.horariosPausaPadrao is not None:
+    if config.horariosPausaPadrao is not None:  # <--- GRAVA AS PAUSAS NA BASE DE DADOS
         db["horariosPausaPadrao"] = config.horariosPausaPadrao
     if config.horariosBloqueadosPorData is not None:
         db["horariosBloqueadosPorData"] = config.horariosBloqueadosPorData
