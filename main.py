@@ -1,47 +1,107 @@
+import json
+import os
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List, Dict, Optional
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+ARQUIVO_BANCO = "banco.json"
+
+def carregar_banco():
+    if os.path.exists(ARQUIVO_BANCO):
+        try:
+            with open(ARQUIVO_BANCO, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {
+        "whatsYukio": "",
+        "instagramYukio": "",
+        "telegramYukio": "",
+        "senhaYukio": "1234",
+        "servicos": [
+            {"id": "corte", "nome": "Corte de Cabelo", "preco": 3000},
+            {"id": "combo", "nome": "Corte + Barba", "preco": 4500}
+        ],
+        "diasFechados": [],
+        "horariosPausaPadrao": [],
+        "horariosBloqueadosPorData": {},
+        "agendamentos": []
+    }
+
+def salvar_banco(dados):
+    with open(ARQUIVO_BANCO, "w", encoding="utf-8") as f:
+        json.dump(dados, f, ensure_ascii=False, indent=4)
+
+class Agendamento(BaseModel):
+    cliente: str
+    servico: str
+    preco: int
+    data: str
+    horario: str
+    whatsapp: str
+
+class Configuracao(BaseModel):
+    whatsYukio: Optional[str] = None
+    instagramYukio: Optional[str] = None
+    telegramYukio: Optional[str] = None
+    senhaYukio: Optional[str] = None
+    servicos: Optional[List[dict]] = None
+    diasFechados: Optional[List[int]] = None
+    horariosPausaPadrao: Optional[List[str]] = None
+    horariosBloqueadosPorData: Optional[Dict[str, List[str]]] = None
+    agendamentos: Optional[List[dict]] = None
+
+@app.get("/api/dados")
+def obter_dados():
+    return carregar_banco()
+
+@app.post("/api/agendar")
+def realizar_agendamento(agendamento: Agendamento):
+    banco = carregar_banco()
+    banco["agendamentos"].append(agendamento.dict())
+    
+    if agendamento.data not in banco["horariosBloqueadosPorData"]:
+        banco["horariosBloqueadosPorData"][agendamento.data] = []
+        
+    if agendamento.horario not in banco["horariosBloqueadosPorData"][agendamento.data]:
+        banco["horariosBloqueadosPorData"][agendamento.data].append(agendamento.horario)
+        
+    salvar_banco(banco)
+    return {"sucesso": True, "mensagem": "Agendamento confirmado!"}
+
 @app.post("/api/configurar")
 def atualizar_configuracao(config: Configuracao):
     banco = carregar_banco()
-
-    print("===================================")
-    print("CONFIG RECEBIDA:")
-    print(config.dict())
-    print("HORARIOS PAUSA RECEBIDOS:")
-    print(config.horariosPausaPadrao)
-    print("===================================")
-
+    
     if config.whatsYukio is not None:
         banco["whatsYukio"] = config.whatsYukio
-
     if config.instagramYukio is not None:
         banco["instagramYukio"] = config.instagramYukio
-
     if config.telegramYukio is not None:
         banco["telegramYukio"] = config.telegramYukio
-
     if config.senhaYukio is not None:
         banco["senhaYukio"] = config.senhaYukio
-
     if config.servicos is not None:
         banco["servicos"] = config.servicos
-
     if config.diasFechados is not None:
         banco["diasFechados"] = config.diasFechados
-
     if config.horariosPausaPadrao is not None:
         banco["horariosPausaPadrao"] = config.horariosPausaPadrao
-
     if config.horariosBloqueadosPorData is not None:
         banco["horariosBloqueadosPorData"] = config.horariosBloqueadosPorData
-
     if config.agendamentos is not None:
         banco["agendamentos"] = config.agendamentos
-
+        
     salvar_banco(banco)
-
-    print("BANCO SALVO:")
-    print(banco["horariosPausaPadrao"])
-
-    return {
-        "sucesso": True,
-        "banco": banco
-    }
+    return {"sucesso": True, "banco": banco}
