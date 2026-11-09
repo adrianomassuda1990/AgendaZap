@@ -25,6 +25,7 @@ banco_dados = {
         {"id": "combo", "nome": "Corte + Barba", "preco": 4500, "duracao": 80}
     ],
     "diasFechados": [],
+    "horariosPausaPadrao": [],  # <--- ADICIONADO AQUI
     "horariosBloqueadosPorData": {},
     "agendamentos": []
 }
@@ -46,6 +47,7 @@ class Configuracao(BaseModel):
     senhaYukio: Optional[str] = None
     servicos: Optional[List[dict]] = None
     diasFechados: Optional[List[int]] = None
+    horariosPausaPadrao: Optional[List[str]] = None  # <--- ADICIONADO AQUI
     horariosBloqueadosPorData: Optional[Dict[str, List[str]]] = None
 
 @app.get("/api/dados")
@@ -82,6 +84,8 @@ def atualizar_configuracao(config: Configuracao):
         banco_dados["servicos"] = config.servicos
     if config.diasFechados is not None:
         banco_dados["diasFechados"] = config.diasFechados
+    if config.horariosPausaPadrao is not None:  # <--- ADICIONADO AQUI
+        banco_dados["horariosPausaPadrao"] = config.horariosPausaPadrao
     if config.horariosBloqueadosPorData is not None:
         banco_dados["horariosBloqueadosPorData"] = config.horariosBloqueadosPorData
         
