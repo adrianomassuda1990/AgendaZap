@@ -3,86 +3,117 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agendamento - Barbearia</title>
+  <title id="page-title">Barbearia - Agendamento Online</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen p-4 sm:p-8 flex justify-center items-start">
+<body class="bg-zinc-950 min-h-screen flex justify-center p-0 sm:p-4 text-zinc-100">
 
-  <div class="w-full max-w-lg space-y-6">
+  <div class="w-full max-w-md bg-zinc-900 min-h-screen sm:min-h-[750px] sm:rounded-3xl shadow-2xl flex flex-col justify-between overflow-hidden relative border border-zinc-800">
     
-    <!-- CABEÇALHO COM LOGO E NOME -->
-    <div class="text-center space-y-3 bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-xl">
-      <div id="container-logo" class="w-20 h-20 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto border border-amber-500/20 overflow-hidden">
-        <i data-lucide="scissors" class="w-8 h-8"></i>
+    <div>
+      <!-- Header Dinâmico (Nome e Logo) -->
+      <div class="bg-gradient-to-b from-zinc-800 to-zinc-900 text-white p-6 text-center relative border-b border-zinc-800">
+        <div id="logo-container" class="w-20 h-20 rounded-full border-2 border-amber-500/50 shadow-lg mx-auto overflow-hidden bg-zinc-950 flex items-center justify-center mb-2">
+          <i data-lucide="scissors" class="w-10 h-10 text-amber-500" id="default-icon"></i>
+        </div>
+        <h1 id="barber-name" class="text-xl font-bold tracking-tight uppercase">Barbearia</h1>
+        <p class="text-xs text-amber-500/90 flex items-center justify-center gap-1 mt-1 font-medium">
+          <i data-lucide="map-pin" class="w-3 h-3"></i> Gunma - Ota, Japão
+        </p>
       </div>
-      <div>
-        <h1 id="nome-barbearia-topo" class="text-xl font-bold text-zinc-100 uppercase tracking-tight">Barbearia</h1>
-        <p class="text-xs text-zinc-400 mt-0.5">Selecione o serviço, data e horário</p>
-      </div>
-    </div>
 
-    <!-- PASSO 1: SERVIÇOS -->
-    <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
-      <h2 class="text-sm font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-2">
-        <span class="w-6 h-6 bg-amber-500 text-zinc-950 rounded-full flex items-center justify-center text-xs font-bold">1</span> Escolha o Serviço
-      </h2>
-      <div class="space-y-2" id="lista-servicos-cliente">
-        <p class="text-xs text-zinc-500">A carregar serviços...</p>
+      <!-- Indicador de Passos -->
+      <div id="steps-indicator-wrapper" class="flex border-b border-zinc-800 bg-zinc-950/50 px-4 py-3 text-xs font-medium text-zinc-400 justify-between">
+        <button type="button" onclick="irParaPasso(1)" id="step-1-indicator" class="text-amber-500 font-bold flex items-center gap-1 hover:text-amber-400 transition-all">1. Serviço</button>
+        <span>&gt;</span>
+        <button type="button" onclick="irParaPasso(2)" id="step-2-indicator" class="flex items-center gap-1 hover:text-amber-400 transition-all">2. Data e Horário</button>
+        <span>&gt;</span>
+        <button type="button" onclick="irParaPasso(3)" id="step-3-indicator" class="flex items-center gap-1 hover:text-amber-400 transition-all">3. Confirmação</button>
       </div>
-    </div>
 
-    <!-- PASSO 2: DATA E HORÁRIO -->
-    <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
-      <h2 class="text-sm font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-2">
-        <span class="w-6 h-6 bg-amber-500 text-zinc-950 rounded-full flex items-center justify-center text-xs font-bold">2</span> Data e Horário
-      </h2>
-      
-      <div class="space-y-3">
+      <!-- PASSO 1 -->
+      <div id="step-1" class="p-5 space-y-5">
         <div>
-          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Selecione a Data</label>
-          <input type="date" id="data-agendamento" onchange="renderizarHorariosCliente()" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-amber-500 font-bold focus:outline-none">
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-2">Selecione o Serviço</label>
+          <div class="space-y-2" id="container-servicos-cliente">
+            <p class="text-xs text-zinc-500">A carregar serviços...</p>
+          </div>
         </div>
 
         <div>
-          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Horários Disponíveis</label>
-          <div class="grid grid-cols-3 gap-2 p-3 bg-zinc-950 rounded-xl border border-zinc-800 max-h-56 overflow-y-auto" id="grid-horarios-cliente"></div>
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-2">Profissional</label>
+          <div class="p-3 border border-amber-500/40 bg-amber-500/5 rounded-xl flex items-center gap-3">
+            <div class="w-10 h-10 bg-amber-500 text-zinc-950 rounded-full flex items-center justify-center font-bold text-sm">DY</div>
+            <div>
+              <div class="text-sm font-bold text-zinc-100">Danilo Yukio</div>
+              <div class="text-xs text-amber-500">Barbeiro responsável</div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- PASSO 3: DADOS DO CLIENTE E CONFIRMAÇÃO -->
-    <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 space-y-4">
-      <h2 class="text-sm font-bold text-zinc-200 flex items-center gap-2 border-b border-zinc-800 pb-2">
-        <span class="w-6 h-6 bg-amber-500 text-zinc-950 rounded-full flex items-center justify-center text-xs font-bold">3</span> Seus Dados
-      </h2>
-
-      <div class="space-y-3">
+      <!-- PASSO 2 -->
+      <div id="step-2" class="p-5 space-y-5 hidden">
         <div>
-          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Seu Nome</label>
-          <input type="text" id="cliente-nome" placeholder="Digite seu nome..." class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-zinc-100 focus:outline-none">
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-2">Selecione a Data</label>
+          <input type="date" id="data-agendamento" onchange="carregarHorariosCliente()" class="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-amber-500 font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none">
         </div>
+
+        <div id="alerta-dia-fechado" class="hidden p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center space-y-1">
+          <p class="text-sm font-bold text-red-400">Barbearia Fechada nesta Data!</p>
+          <p class="text-xs text-zinc-400">Por favor, escolha outro dia no calendário acima.</p>
+        </div>
+
+        <div id="wrapper-horarios">
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-2">Horários Disponíveis</label>
+          <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-60 overflow-y-auto pr-1" id="horarios-grid-cliente"></div>
+        </div>
+      </div>
+
+      <!-- PASSO 3 -->
+      <div id="step-3" class="p-5 space-y-4 hidden">
         <div>
-          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Seu Telemóvel / WhatsApp</label>
-          <input type="tel" id="cliente-whatsapp" placeholder="Ex: 09012345678" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-zinc-100 focus:outline-none">
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Seu Nome Completo</label>
+          <input type="text" id="nome-cliente" placeholder="Ex: Carlos Silva" class="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-zinc-100 focus:ring-2 focus:ring-amber-500 focus:outline-none">
         </div>
 
-        <div id="resumo-escolha" class="p-3 bg-zinc-950 rounded-xl border border-zinc-800 text-xs text-zinc-400 space-y-1">
-          <p>Serviço: <span class="text-zinc-200 font-bold">Nenhum selecionado</span></p>
-          <p>Horário: <span class="text-zinc-200 font-bold">Nenhum selecionado</span></p>
+        <div>
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Contato (WhatsApp / Opcional)</label>
+          <input type="text" id="whats-cliente" placeholder="Ex: 090-XXXX-XXXX ou Apelido" class="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-zinc-100 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        </div>
+      </div>
+
+      <!-- PASSO 4 -->
+      <div id="step-4" class="p-6 text-center space-y-4 hidden my-auto">
+        <div class="w-16 h-16 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mx-auto border border-amber-500/40 shadow-xl">
+          <i data-lucide="check-circle-2" class="w-10 h-10"></i>
+        </div>
+        <div class="space-y-1">
+          <h2 class="text-xl font-bold text-zinc-100">Agendamento Registado!</h2>
+          <p class="text-xs text-zinc-400 px-2" id="instrucao-envio">Escolha por onde deseja enviar a confirmação:</p>
         </div>
 
-        <button onclick="confirmarAgendamento()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
-          <i data-lucide="check-circle" class="w-4 h-4"></i> Confirmar Agendamento
+        <div id="container-botoes-canais" class="space-y-2 pt-2"></div>
+
+        <button onclick="location.reload()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs rounded-xl transition-all mt-3">
+          Fazer Novo Agendamento
         </button>
       </div>
     </div>
 
-    <!-- LINK PARA O PAINEL -->
-    <div class="text-center pb-6">
-      <a href="painel.html" class="text-xs text-zinc-500 hover:text-amber-500 transition-all flex items-center justify-center gap-1">
-        <i data-lucide="lock" class="w-3 h-3"></i> Acesso Restrito (Painel)
-      </a>
+    <!-- Rodapé -->
+    <div id="footer-actions" class="p-4 bg-zinc-900 border-t border-zinc-800 flex flex-col gap-3">
+      <button id="next-btn" onclick="nextStep()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-sm rounded-xl shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2">
+        <span>Avançar para Horários</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+
+      <div class="text-center pt-1" id="footer-link-admin">
+        <a href="painel.html" class="text-[11px] text-zinc-500 hover:text-amber-500 flex items-center justify-center gap-1 transition-all">
+          <i data-lucide="lock" class="w-3 h-3"></i> Área Restrita / Painel do Barbeiro
+        </a>
+      </div>
     </div>
 
   </div>
@@ -91,22 +122,10 @@
     const API_URL = "https://agendazap-ozrf.onrender.com";
     lucide.createIcons();
 
-    let dadosServidor = {
-      nomeBarbearia: "Barbearia",
-      logoBarbearia: "",
-      servicos: [],
-      diasFechados: [],
-      horariosBloqueadosPorData: {},
-      horariosPausaPadrao: [],
-      agendamentos: []
-    };
-
-    let servicoSelecionado = null;
-    let horarioSelecionado = null;
-
-    const inputDataCliente = document.getElementById('data-agendamento');
-    const hojeStr = new Date().toISOString().split('T')[0];
-    if (inputDataCliente) inputDataCliente.value = hojeStr;
+    let currentStep = 1;
+    let horarioEscolhido = "";
+    let servicoEscolhido = null;
+    let dadosBackend = { nomeBarbearia: "Barbearia", logoBarbearia: "", servicos: [], horariosBloqueadosPorData: {}, horariosPausaPadrao: [], whatsYukio: "", instagramYukio: "", telegramYukio: "", diasFechados: [] };
 
     function gerarHorarios15min() {
       const lista = [];
@@ -119,169 +138,313 @@
       }
       return lista;
     }
-    const horariosLista = gerarHorarios15min();
 
-    async function carregarDadosCliente() {
+    const horariosLista = gerarHorarios15min();
+    const inputData = document.getElementById('data-agendamento');
+    const hojeStr = new Date().toISOString().split('T')[0];
+    inputData.min = hojeStr;
+    inputData.value = hojeStr;
+
+    async function buscarDadosBackend() {
       try {
         const res = await fetch(`${API_URL}/api/dados`);
-        const data = await res.json();
-        if (data) {
-          dadosServidor = { ...dadosServidor, ...data };
-          atualizarIdentidadeVisual();
-          renderizarServicosCliente();
-          renderizarHorariosCliente();
-        }
-      } catch (err) { console.error("Erro ao carregar dados:", err); }
-    }
-
-    function atualizarIdentidadeVisual() {
-      if (dadosServidor.nomeBarbearia) {
-        document.getElementById('nome-barbearia-topo').innerText = dadosServidor.nomeBarbearia;
-      }
-      if (dadosServidor.logoBarbearia) {
-        const containerLogo = document.getElementById('container-logo');
-        containerLogo.innerHTML = `<img src="${dadosServidor.logoBarbearia}" class="w-full h-full object-cover">`;
-      }
-    }
-
-    function renderizarServicosCliente() {
-      const container = document.getElementById('lista-servicos-cliente');
-      container.innerHTML = '';
-      const servicos = dadosServidor.servicos || [];
-
-      if (servicos.length === 0) {
-        container.innerHTML = `<p class="text-xs text-zinc-500">Nenhum serviço disponível no momento.</p>`;
-        return;
-      }
-
-      servicos.forEach(s => {
-        const div = document.createElement('div');
-        const isSelected = servicoSelecionado && servicoSelecionado.id === s.id;
-        div.className = isSelected 
-          ? "p-3 bg-amber-500/10 border border-amber-500 text-amber-400 rounded-xl cursor-pointer flex justify-between items-center" 
-          : "p-3 bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-xl cursor-pointer flex justify-between items-center hover:border-zinc-700";
+        dadosBackend = await res.json();
         
-        div.innerHTML = `
-          <div>
-            <div class="text-sm font-bold text-zinc-100">${s.nome}</div>
-            <div class="text-xs text-zinc-400">${s.duracao || 30} min</div>
-          </div>
-          <div class="text-sm font-bold text-amber-500">¥${s.preco}</div>
-        `;
-        div.onclick = () => {
-          servicoSelecionado = s;
-          renderizarServicosCliente();
-          atualizarResumo();
-        };
-        container.appendChild(div);
-      });
+        const nomeBarbearia = dadosBackend.nomeBarbearia || "Barbearia";
+        document.getElementById('barber-name').innerText = nomeBarbearia;
+        document.getElementById('page-title').innerText = `${nomeBarbearia} - Agendamento Online`;
+
+        if (dadosBackend.logoBarbearia) {
+          const logoContainer = document.getElementById('logo-container');
+          logoContainer.innerHTML = `<img src="${dadosBackend.logoBarbearia}" class="w-full h-full object-cover">`;
+        }
+
+        carregarServicosCliente();
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err);
+      }
+    }
+
+    function irParaPasso(passo) {
+      if (passo === currentStep) return;
+      document.getElementById('step-1').classList.add('hidden');
+      document.getElementById('step-2').classList.add('hidden');
+      document.getElementById('step-3').classList.add('hidden');
+
+      document.getElementById('step-1-indicator').className = 'text-zinc-500 font-normal flex items-center gap-1 hover:text-amber-400 transition-all';
+      document.getElementById('step-2-indicator').className = 'text-zinc-500 font-normal flex items-center gap-1 hover:text-amber-400 transition-all';
+      document.getElementById('step-3-indicator').className = 'text-zinc-500 font-normal flex items-center gap-1 hover:text-amber-400 transition-all';
+
+      if (passo === 1) {
+        document.getElementById('step-1').classList.remove('hidden');
+        document.getElementById('step-1-indicator').className = 'text-amber-500 font-bold flex items-center gap-1 hover:text-amber-400 transition-all';
+        document.getElementById('next-btn').innerHTML = '<span>Avançar para Horários</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>';
+        currentStep = 1;
+      } else if (passo === 2) {
+        carregarHorariosCliente();
+        document.getElementById('step-2').classList.remove('hidden');
+        document.getElementById('step-2-indicator').className = 'text-amber-500 font-bold flex items-center gap-1 hover:text-amber-400 transition-all';
+        document.getElementById('next-btn').innerHTML = '<span>Confirmar Dados</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>';
+        currentStep = 2;
+      } else if (passo === 3) {
+        document.getElementById('step-3').classList.remove('hidden');
+        document.getElementById('step-3-indicator').className = 'text-amber-500 font-bold flex items-center gap-1 hover:text-amber-400 transition-all';
+        document.getElementById('next-btn').innerHTML = '<span>Finalizar Agendamento</span> <i data-lucide="check" class="w-4 h-4"></i>';
+        currentStep = 3;
+      }
       lucide.createIcons();
     }
 
-    function renderizarHorariosCliente() {
-      const dataSel = inputDataCliente.value;
-      const grid = document.getElementById('grid-horarios-cliente');
-      grid.innerHTML = '';
+    function carregarServicosCliente() {
+      const servicos = dadosBackend.servicos && dadosBackend.servicos.length ? dadosBackend.servicos : [
+        { id: 'corte', nome: 'Corte de Cabelo', preco: 3000, duracao: 50 },
+        { id: 'combo', nome: 'Corte + Barba', preco: 4500, duracao: 80 }
+      ];
+      const container = document.getElementById('container-servicos-cliente');
+      container.innerHTML = '';
+      servicos.forEach((s, idx) => {
+        if (idx === 0 && !servicoEscolhido) servicoEscolhido = s;
+        const duracaoMin = s.duracao || 30;
+        const label = document.createElement('label');
+        label.className = (servicoEscolhido && servicoEscolhido.nome === s.nome)
+          ? "card-servico flex items-center justify-between p-3.5 border-2 border-amber-500/80 rounded-2xl bg-amber-500/10 cursor-pointer transition-all"
+          : "card-servico flex items-center justify-between p-3.5 border-2 border-zinc-800 rounded-2xl hover:border-zinc-700 cursor-pointer transition-all bg-zinc-950/40";
+        label.onclick = () => selecionarServicoCard(label, s);
+        label.innerHTML = `
+          <div class="flex items-center gap-3">
+            <input type="radio" name="servico" value="${s.nome}" ${(servicoEscolhido && servicoEscolhido.nome === s.nome) ? 'checked' : ''} class="accent-amber-500 w-4 h-4">
+            <div>
+              <div class="font-bold text-sm text-zinc-100">${s.nome}</div>
+              <div class="text-xs text-zinc-400">⏱️ Duração: ${duracaoMin} min</div>
+            </div>
+          </div>
+          <span class="preco-tag font-bold text-sm ${(servicoEscolhido && servicoEscolhido.nome === s.nome) ? 'text-amber-500' : 'text-zinc-400'}">¥ ${Number(s.preco).toLocaleString()}</span>
+        `;
+        container.appendChild(label);
+      });
+    }
 
+    function selecionarServicoCard(labelElement, servicoObj) {
+      servicoEscolhido = servicoObj;
+      document.querySelectorAll('.card-servico').forEach(card => {
+        card.className = "card-servico flex items-center justify-between p-3.5 border-2 border-zinc-800 rounded-2xl hover:border-zinc-700 cursor-pointer transition-all bg-zinc-950/40";
+        card.querySelector('.preco-tag').className = "preco-tag font-bold text-sm text-zinc-400";
+        card.querySelector('input[type="radio"]').checked = false;
+      });
+      labelElement.className = "card-servico flex items-center justify-between p-3.5 border-2 border-amber-500/80 rounded-2xl bg-amber-500/10 cursor-pointer transition-all";
+      labelElement.querySelector('.preco-tag').className = "preco-tag font-bold text-sm text-amber-500";
+      labelElement.querySelector('input[type="radio"]').checked = true;
+    }
+
+    function horaParaMinutos(horaStr) {
+      const [h, m] = horaStr.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    async function carregarHorariosCliente() {
+      const dataSel = inputData.value;
       if (!dataSel) return;
+      const partes = dataSel.split('-');
+      const dataObj = new Date(partes[0], partes[1] - 1, partes[2]);
+      const diaDaSemana = dataObj.getDay();
+      await buscarDadosBackend();
+      const diasFechados = dadosBackend.diasFechados || [];
 
-      // Verificar se o dia da semana está fechado
-      const dataObj = new Date(dataSel + 'T00:00:00');
-      const diaSemana = dataObj.getDay();
-      if ((dadosServidor.diasFechados || []).includes(diaSemana)) {
-        grid.innerHTML = `<p class="text-xs text-red-400 col-span-3 text-center py-4 font-bold">Barbearia Fechada neste dia da semana.</p>`;
+      if (diasFechados.includes(diaDaSemana)) {
+        document.getElementById('alerta-dia-fechado').classList.remove('hidden');
+        document.getElementById('wrapper-horarios').classList.add('hidden');
+        document.getElementById('next-btn').disabled = true;
+        document.getElementById('next-btn').classList.add('opacity-50', 'cursor-not-allowed');
+        horarioEscolhido = "";
         return;
+      } else {
+        document.getElementById('alerta-dia-fechado').classList.add('hidden');
+        document.getElementById('wrapper-horarios').classList.remove('hidden');
+        document.getElementById('next-btn').disabled = false;
+        document.getElementById('next-btn').classList.remove('opacity-50', 'cursor-not-allowed');
       }
 
-      const bloqueadosDoDia = (dadosServidor.horariosBloqueadosPorData || {})[dataSel] || [];
-      const pausasPadrao = dadosServidor.horariosPausaPadrao || [];
+      const duracaoServico = servicoEscolhido ? (servicoEscolhido.duracao || 30) : 30;
+      const bloqueadosPorData = dadosBackend.horariosBloqueadosPorData || {};
+      const bloqueadosDoDia = bloqueadosPorData[dataSel] || [];
+      const pausasPadrao = dadosBackend.horariosPausaPadrao || [];
 
-      horariosLista.forEach(hora => {
-        const isBloqueado = bloqueadosDoDia.includes(hora) || pausasPadrao.includes(hora);
+      const grid = document.getElementById('horarios-grid-cliente');
+      grid.innerHTML = '';
+      horarioEscolhido = "";
+      let horariosDisponiveisCount = 0;
+
+      horariosLista.forEach(horaInicio => {
+        const inicioMin = horaParaMinutos(horaInicio);
+        const fimMin = inicioMin + duracaoServico;
+
+        // Verifica conflitos com bloqueios da data OU pausas recorrentes padrão
+        let conflito = false;
+        for (let m = inicioMin; m < fimMin; m += 15) {
+          const hStr = String(Math.floor(m / 60)).padStart(2, '0');
+          const mStr = String(m % 60).padStart(2, '0');
+          const slotVerifica = `${hStr}:${mStr}`;
+          if (bloqueadosDoDia.includes(slotVerifica) || pausasPadrao.includes(slotVerifica)) {
+            conflito = true;
+            break;
+          }
+        }
+
+        if (conflito) return;
+
+        horariosDisponiveisCount++;
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.innerText = hora;
+        btn.innerText = horaInicio;
 
-        if (isBloqueado) {
-          btn.className = "p-2.5 bg-zinc-900/50 border border-zinc-800/50 text-zinc-600 rounded-xl text-xs font-bold cursor-not-allowed line-through";
-          btn.disabled = true;
+        if (!horarioEscolhido) {
+          horarioEscolhido = horaInicio;
+          btn.className = "time-btn p-2 border-2 border-amber-500 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold transition-all shadow-sm shadow-amber-500/10";
         } else {
-          const isSelected = horarioSelecionado === hora;
-          btn.className = isSelected 
-            ? "p-2.5 bg-amber-500 text-zinc-950 rounded-xl text-xs font-bold shadow-md" 
-            : "p-2.5 bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-xl text-xs font-bold hover:border-zinc-700";
-          
-          btn.onclick = () => {
-            horarioSelecionado = hora;
-            renderizarHorariosCliente();
-            atualizarResumo();
-          };
+          btn.className = "time-btn p-2 border border-zinc-800 bg-zinc-950/40 rounded-lg text-xs font-bold text-zinc-300 hover:border-zinc-700 transition-all";
         }
+        btn.onclick = () => selecionarHorario(btn, horaInicio);
         grid.appendChild(btn);
       });
-    }
 
-    function atualizarResumo() {
-      const resumo = document.getElementById('resumo-escolha');
-      resumo.innerHTML = `
-        <p>Serviço: <span class="text-zinc-200 font-bold">${servicoSelecionado ? servicoSelecionado.nome + ' (¥' + servicoSelecionado.preco + ')' : 'Nenhum selecionado'}</span></p>
-        <p>Horário: <span class="text-zinc-200 font-bold">${horarioSelecionado ? inputDataCliente.value + ' às ' + horarioSelecionado : 'Nenhum selecionado'}</span></p>
-      `;
-    }
-
-    async function confirmarAgendamento() {
-      if (!servicoSelecionado) { alert("Selecione um serviço!"); return; }
-      if (!horarioSelecionado) { alert("Selecione um horário!"); return; }
-      const nome = document.getElementById('cliente-nome').value.trim();
-      const whatsapp = document.getElementById('cliente-whatsapp').value.trim();
-
-      if (!nome || !whatsapp) { alert("Preencha o seu nome e telemóvel!"); return; }
-
-      const dataSel = inputDataCliente.value;
-
-      // Adiciona o bloqueio e o agendamento no servidor
-      if (!dadosServidor.horariosBloqueadosPorData[dataSel]) {
-        dadosServidor.horariosBloqueadosPorData[dataSel] = [];
+      if (horariosDisponiveisCount === 0) {
+        grid.innerHTML = `<p class="text-xs text-amber-500 col-span-full text-center py-4">Não há horários disponíveis para este serviço nesta data.</p>`;
       }
-      dadosServidor.horariosBloqueadosPorData[dataSel].push(horarioSelecionado);
+    }
 
-      if (!dadosServidor.agendamentos) dadosServidor.agendamentos = [];
-      dadosServidor.agendamentos.push({
-        cliente: nome,
-        servico: servicoSelecionado.nome,
-        preco: servicoSelecionado.preco,
-        data: dataSel,
-        horario: horarioSelecionado,
-        whatsapp: whatsapp
+    function selecionarHorario(btn, hora) {
+      horarioEscolhido = hora;
+      document.querySelectorAll('.time-btn').forEach(b => {
+        b.className = "time-btn p-2 border border-zinc-800 bg-zinc-950/40 rounded-lg text-xs font-bold text-zinc-300 hover:border-zinc-700 transition-all";
       });
-
-      try {
-        const res = await fetch(`${API_URL}/api/configurar`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dadosServidor)
-        });
-
-        if (res.ok) {
-          alert("Agendamento realizado com sucesso!");
-          
-          // Redirecionar para o WhatsApp se houver número configurado
-          const numeroZap = dadosServidor.whatsYukio || "";
-          if (numeroZap) {
-            const texto = encodeURIComponent(`Olá! Agendei ${servicoSelecionado.nome} para o dia ${dataSel} às ${horarioSelecionado}. Meu nome é ${nome}.`);
-            window.location.href = `https://wa.me/${numeroZap}?text=${texto}`;
-          } else {
-            window.location.reload();
-          }
-        } else {
-          alert("Erro ao efetuar agendamento no servidor.");
-        }
-      } catch (err) {
-        alert("Erro de conexão.");
-      }
+      btn.className = "time-btn p-2 border-2 border-amber-500 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold transition-all shadow-sm shadow-amber-500/10";
     }
 
-    carregarDadosCliente();
+    function formatarNumeroJapao(numero) {
+      let limpo = (numero || '').replace(/\D/g, '');
+      if (limpo.startsWith('0')) limpo = limpo.substring(1);
+      if (!limpo.startsWith('81')) limpo = '81' + limpo;
+      return limpo;
+    }
+
+    async function nextStep() {
+      if (currentStep === 1) {
+        irParaPasso(2);
+      } else if (currentStep === 2) {
+        if (!horarioEscolhido) { alert("Selecione um horário!"); return; }
+        irParaPasso(3);
+      } else if (currentStep === 3) {
+        const nome = document.getElementById('nome-cliente').value;
+        const whats = document.getElementById('whats-cliente').value || "Não informado";
+        if (!nome) { alert("Por favor, preencha o seu nome!"); return; }
+
+        const dataFormatada = inputData.value.split('-').reverse().join('/');
+        const duracaoServico = servicoEscolhido.duracao || 30;
+
+        const inicioMin = horaParaMinutos(horarioEscolhido);
+        const horariosParaBloquear = [];
+        for (let m = inicioMin; m < inicioMin + duracaoServico; m += 15) {
+          const hStr = String(Math.floor(m / 60)).padStart(2, '0');
+          const mStr = String(m % 60).padStart(2, '0');
+          horariosParaBloquear.push(`${hStr}:${mStr}`);
+        }
+
+        try {
+          for (let slot of horariosParaBloquear) {
+            await fetch(`${API_URL}/api/agendar`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                cliente: nome,
+                servico: servicoEscolhido.nome,
+                preco: servicoEscolhido.preco,
+                data: inputData.value,
+                horario: slot,
+                whatsapp: whats
+              })
+            });
+          }
+        } catch (e) {
+          console.error("Erro ao agendar:", e);
+        }
+
+        const nomeLoja = dadosBackend.nomeBarbearia || "Barbearia";
+        const textoMensagem = `✅ *SOLICITAÇÃO DE AGENDAMENTO!*\n\n` +
+          `💈 *${nomeLoja} (Ota - Gunma)*\n` +
+          `👤 *Cliente:* ${nome}\n` +
+          `✂️ *Serviço:* ${servicoEscolhido.nome} (¥ ${Number(servicoEscolhido.preco).toLocaleString()} - ${duracaoServico} min)\n` +
+          `📅 *Data:* ${dataFormatada}\n` +
+          `⏰ *Horário:* ${horarioEscolhido}\n` +
+          `📲 *Contato:* ${whats}\n\n` +
+          `_Agendado via AgendaZap_`;
+
+        const containerCanais = document.getElementById('container-botoes-canais');
+        containerCanais.innerHTML = '';
+        let temCanais = false;
+
+        // WhatsApp
+        if (dadosBackend.whatsYukio && dadosBackend.whatsYukio.trim() !== "") {
+          temCanais = true;
+          let numeroFinal = formatarNumeroJapao(dadosBackend.whatsYukio);
+          let linkWhats = `https://api.whatsapp.com/send?phone=${numeroFinal}&text=${encodeURIComponent(textoMensagem)}`;
+          
+          let btnWhats = document.createElement('a');
+          btnWhats.href = linkWhats;
+          btnWhats.target = "_blank";
+          btnWhats.className = "w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg";
+          btnWhats.innerHTML = `<i data-lucide="message-circle" class="w-4 h-4"></i> Enviar via WhatsApp`;
+          containerCanais.appendChild(btnWhats);
+        }
+
+        // Instagram
+        if (dadosBackend.instagramYukio && dadosBackend.instagramYukio.trim() !== "") {
+          temCanais = true;
+          let userIg = dadosBackend.instagramYukio.replace('@', '').trim();
+          let linkIg = `https://instagram.com/${userIg}`;
+
+          let btnIg = document.createElement('button');
+          btnIg.type = "button";
+          btnIg.className = "w-full py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg";
+          btnIg.innerHTML = `<i data-lucide="instagram" class="w-4 h-4"></i> Enviar via Instagram Direct`;
+          
+          btnIg.onclick = () => {
+            navigator.clipboard.writeText(textoMensagem).then(() => {
+              alert("📋 Dados do agendamento copiados!\n\nCole a mensagem no chat do Instagram para a barbearia.");
+              window.open(linkIg, '_blank');
+            }).catch(() => {
+              window.open(linkIg, '_blank');
+            });
+          };
+          containerCanais.appendChild(btnIg);
+        }
+
+        // Telegram
+        if (dadosBackend.telegramYukio && dadosBackend.telegramYukio.trim() !== "") {
+          temCanais = true;
+          let userTg = dadosBackend.telegramYukio.replace('@', '').trim();
+          let linkTg = `https://t.me/${userTg}?text=${encodeURIComponent(textoMensagem)}`;
+
+          let btnTg = document.createElement('a');
+          btnTg.href = linkTg;
+          btnTg.target = "_blank";
+          btnTg.className = "w-full py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg";
+          btnTg.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Enviar via Telegram`;
+          containerCanais.appendChild(btnTg);
+        }
+
+        if (!temCanais) {
+          document.getElementById('instrucao-envio').innerText = "Agendamento concluído com sucesso!";
+        }
+
+        document.getElementById('step-3').classList.add('hidden');
+        document.getElementById('steps-indicator-wrapper').classList.add('hidden');
+        document.getElementById('footer-actions').classList.add('hidden');
+        document.getElementById('step-4').classList.remove('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    buscarDadosBackend();
   </script>
 </body>
 </html>
