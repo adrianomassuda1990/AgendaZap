@@ -25,13 +25,18 @@ def carregar_banco():
         except Exception:
             pass
     return {
+        "nomeBarbearia": "Barbearia Yukio",
+        "logoUrl": "",
         "whatsYukio": "",
         "instagramYukio": "",
         "telegramYukio": "",
         "senhaYukio": "1234",
         "servicos": [
-            {"id": "corte", "nome": "Corte de Cabelo", "preco": 3000},
-            {"id": "combo", "nome": "Corte + Barba", "preco": 4500}
+            {"id": 'corte', 'nome': 'Corte de Cabelo', 'preco': 3000, 'duracao': 50},
+            {"id": 'combo', 'nome': 'Corte + Barba', 'preco': 4500, 'duracao': 80},
+            {"id": 'barba', 'nome': 'Barba', 'preco': 2000, 'duracao': 30},
+            {"id": 'sobrancelha', 'nome': 'Sobrancelha', 'preco': 1000, 'duracao': 20},
+            {"id": 'simples', 'nome': 'Corte Simples', 'preco': 2500, 'duracao': 20}
         ],
         "diasFechados": [],
         "horariosPausaPadrao": [],
@@ -50,8 +55,11 @@ class Agendamento(BaseModel):
     data: str
     horario: str
     whatsapp: str
+    horariosOcupados: Optional[List[str]] = None
 
 class Configuracao(BaseModel):
+    nomeBarbearia: Optional[str] = None
+    logoUrl: Optional[str] = None
     whatsYukio: Optional[str] = None
     instagramYukio: Optional[str] = None
     telegramYukio: Optional[str] = None
@@ -74,8 +82,11 @@ def realizar_agendamento(agendamento: Agendamento):
     if agendamento.data not in banco["horariosBloqueadosPorData"]:
         banco["horariosBloqueadosPorData"][agendamento.data] = []
         
-    if agendamento.horario not in banco["horariosBloqueadosPorData"][agendamento.data]:
-        banco["horariosBloqueadosPorData"][agendamento.data].append(agendamento.horario)
+    # Bloqueia todos os horários correspondentes à duração do serviço
+    horariosParaBloquear = agendamento.horariosOcupados if agendamento.horariosOcupados else [agendamento.horario]
+    for h in horariosParaBloquear:
+        if h not in banco["horariosBloqueadosPorData"][agendamento.data]:
+            banco["horariosBloqueadosPorData"][agendamento.data].append(h)
         
     salvar_banco(banco)
     return {"sucesso": True, "mensagem": "Agendamento confirmado!"}
@@ -84,6 +95,10 @@ def realizar_agendamento(agendamento: Agendamento):
 def atualizar_configuracao(config: Configuracao):
     banco = carregar_banco()
     
+    if config.nomeBarbearia is not None:
+        banco["nomeBarbearia"] = config.nomeBarbearia
+    if config.logoUrl is not None:
+        banco["logoUrl"] = config.logoUrl
     if config.whatsYukio is not None:
         banco["whatsYukio"] = config.whatsYukio
     if config.instagramYukio is not None:
