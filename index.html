@@ -42,7 +42,7 @@
         </div>
       </div>
 
-      <!-- PASSO 2: Horários Interativos -->
+      <!-- PASSO 2: Horários Interativos Sequenciais -->
       <div id="step-2" class="p-5 space-y-5 hidden">
         <div>
           <label class="block text-xs font-bold uppercase text-zinc-400 mb-2">Selecione a Data</label>
@@ -55,7 +55,7 @@
         </div>
 
         <div id="wrapper-horarios">
-          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Horários de Início Disponíveis</label>
+          <label class="block text-xs font-bold uppercase text-zinc-400 mb-1">Horários Disponíveis (Baseados na Duração)</label>
           <p class="text-[11px] text-amber-500 mb-2" id="info-duracao-servico"></p>
           <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-60 overflow-y-auto pr-1" id="horarios-grid-cliente"></div>
         </div>
@@ -77,18 +77,15 @@
         </div>
       </div>
 
-      <!-- PASSO 4: Envio Automático para os Canais do Barbeiro -->
+      <!-- PASSO 4: Redirecionamento Direto -->
       <div id="step-4" class="p-6 text-center space-y-4 hidden my-auto">
         <div class="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto border border-emerald-500/40 shadow-xl">
           <i data-lucide="check-circle-2" class="w-10 h-10"></i>
         </div>
         <div class="space-y-1">
           <h2 class="text-xl font-bold text-zinc-100">Agendamento Registado!</h2>
-          <p class="text-xs text-zinc-400 px-2" id="instrucao-envio">Escolha o canal do barbeiro para enviar a mensagem instantânea:</p>
+          <p class="text-xs text-zinc-400 px-2" id="texto-redirecionamento">A redirecionar automaticamente para o canal do barbeiro...</p>
         </div>
-        
-        <div id="container-botoes-canais" class="space-y-2.5 pt-2"></div>
-
         <button onclick="location.reload()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs rounded-xl transition-all mt-3">
           Fazer Novo Agendamento
         </button>
@@ -120,17 +117,19 @@
     let servicoEscolhido = null;
     let dadosBackend = { servicos: [], horariosBloqueadosPorData: {}, horariosPausaPadrao: [], diasFechados: [], whatsYukio: "", instagramYukio: "", telegramYukio: "" };
 
-    function gerarHorarios30min() {
-      const lista = [];
-      for (let h = 7; h <= 23; h++) {
-        const horaStr = h < 10 ? `0${h}` : `${h}`;
-        lista.push(`${horaStr}:00`);
-        if (h < 23) lista.push(`${horaStr}:30`);
-      }
-      return lista;
+    // Converte minutos para formato hora (ex: 480 min -> "08:00")
+    function minutosParaHora(minutosTotal) {
+      const h = Math.floor(minutosTotal / 60);
+      const m = minutosTotal % 60;
+      return `${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}`;
     }
 
-    const horariosLista = gerarHorarios30min();
+    // Converte "08:00" para minutos totais desde a meia-noite
+    function horaParaMinutos(horaStr) {
+      const partes = horaStr.split(':');
+      return parseInt(partes[0]) * 60 + parseInt(partes[1]);
+    }
+
     const inputData = document.getElementById('data-agendamento');
     const hojeStr = new Date().toISOString().split('T')[0];
     inputData.min = hojeStr;
@@ -246,8 +245,7 @@
       }
 
       const duracaoServico = servicoEscolhido ? (servicoEscolhido.duracao || 30) : 30;
-      const blocosNecessarios = Math.ceil(duracaoServico / 30);
-      document.getElementById('info-duracao-servico').innerText = `Duração: ${duracaoServico} min (Ocupa ${blocosNecessarios} blocos)`;
+      document.getElementById('info-duracao-servico').innerText = `Duração exata: ${duracaoServico} minutos (O próximo começa após o término)`;
 
       const bloqueadosPorData = dadosBackend.horariosBloqueadosPorData || {};
       const bloqueadosDoDia = bloqueadosPorData[dataSel] || [];
@@ -257,41 +255,58 @@
       grid.innerHTML = '';
       horarioEscolhido = "";
 
-      horariosLista.forEach((hora, index) => {
+      // Geração Sequencial Interativa (Ex: 08:00 -> 08:50 -> 09:40 para 50 min)
+      let inicioMin = 7 * 60; // Abre às 07:00
+      const fimMin = 23 * 60; // Fecha às 23:00
+
+      let horariosGerados = [];
+      while (inicioMin + duracaoServico <= fimMin) {
+        const horaInicioStr = minutosParaHora(inicioMin);
+        
+        // Calcula todos os minutos/blocos de 30 min que este atendimento vai ocupar para checar conflitos
         let indisponivel = false;
         let horariosAfetadosTemp = [];
-
-        // Valida se há espaço livre consecutivo suficiente para a duração do serviço escolhido
-        for (let b = 0; b < blocosNecessarios; b++) {
-          const idxTarget = index + b;
-          if (idxTarget >= horariosLista.length) {
+        
+        // Verifica conflitos com base em blocos de 30 min cobertos por este intervalo
+        let mCheck = inicioMin;
+        while (mCheck < inicioMin + duracaoServico) {
+          const slotStr = minutosParaHora(Math.floor(mCheck / 30) * 30); // Arredonda para o bloco base
+          // Verifica se bate com pausa padrão ou bloqueio específico
+          if (pausasPadrao.includes(slotStr) || bloqueadosDoDia.includes(slotStr) || bloqueadosDoDia.includes(minutosParaHora(mCheck))) {
             indisponivel = true;
             break;
           }
-          const horaCheck = horariosLista[idxTarget];
-          if (bloqueadosDoDia.includes(horaCheck) || pausasPadrao.includes(horaCheck)) {
-            indisponivel = true;
-            break;
-          }
-          horariosAfetadosTemp.push(horaCheck);
+          horariosAfetadosTemp.push(minutosParaHora(mCheck));
+          mCheck += 30;
         }
 
+        horariosGerados.push({
+          hora: horaInicioStr,
+          indisponivel: indisponivel,
+          afetados: horariosAfetadosTemp
+        });
+
+        // O próximo horário disponível começa exatamente quando este termina!
+        inicioMin += duracaoServico; 
+      }
+
+      horariosGerados.forEach(item => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.innerText = hora;
+        btn.innerText = item.hora;
 
-        if (indisponivel) {
+        if (item.indisponivel) {
           btn.className = "p-2 border border-zinc-800/50 bg-zinc-950 text-zinc-700 rounded-lg text-xs font-bold cursor-not-allowed opacity-40";
           btn.disabled = true;
         } else {
           if (!horarioEscolhido) {
-            horarioEscolhido = hora;
-            horariosOcupadosPeloServico = horariosAfetadosTemp;
+            horarioEscolhido = item.hora;
+            horariosOcupadosPeloServico = item.afetados;
             btn.className = "time-btn p-2 border-2 border-amber-500 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold transition-all shadow-sm";
           } else {
             btn.className = "time-btn p-2 border border-zinc-800 bg-zinc-950/40 rounded-lg text-xs font-bold text-zinc-300 hover:border-zinc-700 transition-all";
           }
-          btn.onclick = () => selecionarHorario(btn, hora, horariosAfetadosTemp);
+          btn.onclick = () => selecionarHorario(btn, item.hora, item.afetados);
         }
         grid.appendChild(btn);
       });
@@ -323,14 +338,13 @@
         const nome = document.getElementById('nome-cliente').value.trim();
         const whats = document.getElementById('whats-cliente').value.trim();
         
-        // Validação anti-trote rigorosa
         if (!nome || nome.length < 3) { 
           alert("Por favor, insira o seu nome completo!"); 
           return; 
         }
         const numerosWhats = whats.replace(/\D/g, '');
         if (!whats || numerosWhats.length < 8) {
-          alert("Por favor, insira um número de telefone/WhatsApp válido (mínimo 8 dígitos).");
+          alert("Por favor, insira um número de telefone/WhatsApp válido.");
           return;
         }
 
@@ -364,76 +378,37 @@
           `📲 *Contato:* ${whats}\n\n` +
           `_Agendado via AgendaZap_`;
 
-        const containerCanais = document.getElementById('container-botoes-canais');
-        containerCanais.innerHTML = '';
-        let temCanaisConfigurados = false;
-
-        // 1. Botão WhatsApp (se configurado no painel)
-        if (dadosBackend.whatsYukio && dadosBackend.whatsYukio.trim() !== "") {
-          temCanaisConfigurados = true;
-          let numeroFinal = formatarNumeroJapao(dadosBackend.whatsYukio);
-          let linkWhats = `https://api.whatsapp.com/send?phone=${numeroFinal}&text=${encodeURIComponent(textoMensagem)}`;
-          
-          let btnWhats = document.createElement('a');
-          btnWhats.href = linkWhats;
-          btnWhats.target = "_blank";
-          btnWhats.className = "w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg";
-          btnWhats.innerHTML = `<i data-lucide="message-circle" class="w-4 h-4"></i> Enviar Mensagem via WhatsApp`;
-          containerCanais.appendChild(btnWhats);
-        }
-
-        // 2. Botão Instagram (se configurado no painel)
-        if (dadosBackend.instagramYukio && dadosBackend.instagramYukio.trim() !== "") {
-          temCanaisConfigurados = true;
-          let userIg = dadosBackend.instagramYukio.replace('@', '').trim();
-          let linkIg = `https://instagram.com/${userIg}`;
-
-          let btnIg = document.createElement('button');
-          btnIg.type = "button";
-          btnIg.className = "w-full py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg";
-          btnIg.innerHTML = `<i data-lucide="instagram" class="w-4 h-4"></i> Copiar & Enviar via Instagram Direct`;
-          
-          btnIg.onclick = () => {
-            navigator.clipboard.writeText(textoMensagem).then(() => {
-              alert("📋 Mensagem copiada!\n\nCole no chat do Instagram Direct da barbearia.");
-              window.open(linkIg, '_blank');
-            }).catch(() => { window.open(linkIg, '_blank'); });
-          };
-          containerCanais.appendChild(btnIg);
-        }
-
-        // 3. Botão Telegram (se configurado no painel)
-        if (dadosBackend.telegramYukio && dadosBackend.telegramYukio.trim() !== "") {
-          temCanaisConfigurados = true;
-          let userTg = dadosBackend.telegramYukio.replace('@', '').trim();
-          let linkTg = `https://t.me/${userTg}?text=${encodeURIComponent(textoMensagem)}`;
-
-          let btnTg = document.createElement('a');
-          btnTg.href = linkTg;
-          btnTg.target = "_blank";
-          btnTg.className = "w-full py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg";
-          btnTg.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Enviar Mensagem via Telegram`;
-          containerCanais.appendChild(btnTg);
-        }
-
-        // Se nenhum canal específico estiver configurado no painel, exibe opção genérica copiada
-        if (!temCanaisConfigurados) {
-          let btnGenerico = document.createElement('button');
-          btnGenerico.type = "button";
-          btnGenerico.className = "w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg";
-          btnGenerico.innerHTML = `<i data-lucide="copy" class="w-4 h-4"></i> Copiar Dados do Agendamento`;
-          btnGenerico.onclick = () => {
-            navigator.clipboard.writeText(textoMensagem).then(() => {
-              alert("📋 Dados copiados com sucesso!");
-            });
-          };
-          containerCanais.appendChild(btnGenerico);
-        }
-
         document.getElementById('step-3').classList.add('hidden');
         document.getElementById('steps-indicator-wrapper').classList.add('hidden');
         document.getElementById('footer-actions').classList.add('hidden');
         document.getElementById('step-4').classList.remove('hidden');
+
+        // REDIRECIONAMENTO AUTOMÁTICO PARA O CANAL CONFIGURADO PELO BARBEIRO
+        let linkRedirecionamento = "";
+        let nomeCanal = "";
+
+        if (dadosBackend.whatsYukio && dadosBackend.whatsYukio.trim() !== "") {
+          let numeroFinal = formatarNumeroJapao(dadosBackend.whatsYukio);
+          linkRedirecionamento = `https://api.whatsapp.com/send?phone=${numeroFinal}&text=${encodeURIComponent(textoMensagem)}`;
+          nomeCanal = "WhatsApp";
+        } else if (dadosBackend.instagramYukio && dadosBackend.instagramYukio.trim() !== "") {
+          let userIg = dadosBackend.instagramYukio.replace('@', '').trim();
+          linkRedirecionamento = `https://instagram.com/${userIg}`;
+          nomeCanal = "Instagram Direct";
+        } else if (dadosBackend.telegramYukio && dadosBackend.telegramYukio.trim() !== "") {
+          let userTg = dadosBackend.telegramYukio.replace('@', '').trim();
+          linkRedirecionamento = `https://t.me/${userTg}?text=${encodeURIComponent(textoMensagem)}`;
+          nomeCanal = "Telegram";
+        }
+
+        if (linkRedirecionamento) {
+          document.getElementById('texto-redirecionamento').innerText = `A abrir o ${nomeCanal} do barbeiro para enviar a confirmação...`;
+          setTimeout(() => {
+            window.location.href = linkRedirecionamento;
+          }, 1500); // Redireciona automaticamente após 1.5 segundos
+        } else {
+          document.getElementById('texto-redirecionamento').innerText = "Agendamento concluído com sucesso!";
+        }
       }
       lucide.createIcons();
     }
